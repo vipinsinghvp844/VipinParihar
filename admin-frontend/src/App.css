@@ -1,0 +1,237 @@
+@import url("https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap");
+/*header start*/
+.stick{
+  z-index: 1;
+}
+
+/* header end*/
+/*App .jsx css here*/
+
+
+.content{
+  margin: 0px !important;
+  padding: 0px !important;
+}
+.bgcolor{
+  background-color: #e9eaeb;
+  min-height: 100%;
+}
+/*App.jsx css end*/
+/* Login page css start*/
+.cardcontainer .form-control{
+  background: #cdeaff;
+  border-radius: 25px;
+}
+
+/* Login page css start*/
+
+/* Employee page css start*/
+/* App.css */
+.sidebar {
+  height: 100vh;
+  padding: 0;
+}
+
+.profile {
+  padding: 20px;
+}
+
+.profile img {
+  width: 80px;
+  height: 80px;
+}
+
+.content {
+  padding: 0px;
+}
+
+
+
+/* customCalendarStyles.css */
+.react-calendar {
+  border: 1px solid #a0a096;
+  border-radius: 8px;
+  padding: 10px;
+}
+
+
+/*calendar css end*/
+
+/* EM dashboard css start*/
+.inoutcard{
+  border:2px solid #ffffff;
+  border-radius: 10px;
+  backdrop-filter: blur(10px);
+  padding: 5px 20px 5px 5px;
+}
+
+/* EM dashboard css end*/
+@media(min-width:768px){
+  .check {
+    overflow-x: auto !important;
+  }
+}
+
+
+/* letters Css heare*/
+form {
+  max-width: 100%;
+  overflow-x: auto; /* Ensure horizontal scrolling on small screens */
+}
+
+
+
+.right-main-box {
+  width: calc(100% - 210px);
+  margin-left: auto;
+  /* padding: 65px 30px 31px 30px; */
+  padding: 10px 14px 0px 14px;
+  transition: .5s all ease;
+}
+@media (max-width: 480px) {
+.right-main-box{
+width:100% !important;
+}
+}
+
+.main-client-details-filter button {
+  height: 35px;
+}
+
+.main-client-details-filter {
+  position: absolute;
+  right: 0;
+  top: -50px;
+}
+
+.client-details-filter-btn {
+  background: #f1f1f1;
+  padding: 10px;
+}
+
+.client-details-filter-btn button {
+  /* width: 100%; */
+  background: #fff;
+  margin: 0 2px;
+}
+
+.client-details-filter-btn button.active {
+  background-color: #4780FF !important;
+  color: #fff;
+}
+
+.client-details-filter {
+  width: 360px;
+}
+
+.client-details-filter .select-border .custom-dropdown .MuiSelect-select {
+  border: 0;
+  /* font-weight: 400; */
+  color: #4780FF;
+  font-size: 12px;
+  padding-top: 0px !important;
+  font-family: "Poppins", sans-serif !important;
+
+}
+
+.client-details-filter .custom-datepicker-bordered {
+  border-bottom: 0px solid;
+}
+
+.btn-blue:disabled {
+  background: #4780FF !important;
+  border: 1px solid #4780FF !important;
+  color: #c1c1c1;
+  cursor: not-allowed !important;
+  opacity: .6;
+}
+
+.btn-blue,
+.btn-red,
+.btn-green {
+  color: #fff;
+  padding: 4px 10px;
+  border-radius: 3px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: .5s all ease;
+  white-space: nowrap;
+}
+
+.btn-blue {
+  background: var(--primary);
+  border: 1px solid #4780FF !important;
+}
+
+.btn-blue-outline {
+  background: #fff;
+  color: #4780FF !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 10px;
+  border-radius: 3px;
+  border: 1px solid #4780FF !important;
+  font-size: 12px;
+  cursor: pointer;
+  transition: .5s all ease;
+}
+
+.btn-blue:hover {
+  background:  #d42027 !important;
+  border-color:  #d42027 !important;
+  color: #fff;
+}
+
+
+.btn-blue .material-symbols-outlined,
+.btn-red .material-symbols-outlined,
+.btn-green .material-symbols-outlined {
+  margin-right: 2px;
+  font-size: 20px;
+  vertical-align: text-top;
+}
+
+.btn-red .material-symbols-outlined,
+.btn-green .material-symbols-outlined {
+  margin-right: 2px;
+  font-size: 20px;
+  vertical-align: text-top;
+}
+
+.btn-blue:after {
+  display: none;
+}
+
+.btn-red:disabled,
+.btn-green:disabled {
+  cursor: not-allowed !important;
+  opacity: .6;
+}
+
+.btn-red:disabled,
+.btn-green:disabled {
+  cursor: not-allowed !important;
+  opacity: .6;
+}
+
+.btn-red,
+.btn-red:hover {
+  background: #d42027;
+  border: 1px solid #d42027;
+}
+
+
+.btn-blue .material-symbols-outlined,
+.btn-red .material-symbols-outlined,
+.btn-green .material-symbols-outlined {
+  margin-right: 2px;
+  font-size: 20px;
+  vertical-align: text-top;
+}
+
+.highlighted-row td {
+  background-color: rgb(201, 201, 31) !important;
+  /* font-weight: bold !important; */
+  color: #fff !important;
+}

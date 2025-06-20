@@ -1,0 +1,68 @@
+/* Container */
+.manage-attendance-container {
+  padding: 20px;
+  background-color: #f8f9fa;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Back icon */
+.back-icon {
+  cursor: pointer;
+  font-size: 32px;
+  color: #343a40;
+}
+
+/* Action buttons */
+.action-button {
+  margin-right: 5px;
+}
+
+/* Responsive design */
+@media (max-width: 767.98px) {
+  .manage-attendance-container {
+    padding: 10px;
+  }
+
+  .back-icon {
+    font-size: 24px;
+  }
+
+  .action-button {
+    padding: 5px;
+    font-size: 0.75rem;
+  }
+
+  .table thead th,
+  .table tbody td {
+    font-size: 0.75rem;
+  }
+
+  h3 {
+    font-size: 1.5rem;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 991.98px) {
+  .manage-attendance-container {
+    padding: 15px;
+  }
+
+  .back-icon {
+    font-size: 28px;
+  }
+
+  .action-button {
+    padding: 8px;
+    font-size: 0.875rem;
+  }
+
+  .table thead th,
+  .table tbody td {
+    font-size: 0.875rem;
+  }
+
+  h3 {
+    font-size: 1.75rem;
+  }
+}

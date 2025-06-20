@@ -1,0 +1,124 @@
+.sidebar-container {
+  background-color: #f8f9fa;
+  padding: 10px 0px 0px 0px;
+  height: 100vh;
+  /* width: ; */
+}
+.sidebar-container:hover {
+  overflow-x: hidden;
+}
+::-webkit-scrollbar {
+  width: 5px;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 0, 0, 0.493);
+  border-radius: 10px;
+}
+.sidebar-container img {
+  max-width: 150px;
+  height: 60px;
+  margin-left: 20px;
+  margin-bottom: 10px;
+}
+
+.profile-image-container {
+  /* position: relative;
+  display: inline-block; */
+  cursor: pointer;
+}
+
+.camera-icon {
+  position: absolute;
+  top: 60%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  background-color: rgba(0, 0, 0, 0.5);
+  border-radius: 50%;
+  padding: 5px;
+}
+
+.profile-image {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #dee2e6;
+}
+
+h2 {
+  color: #343a40;
+}
+
+.sidebar {
+  padding: 5px;
+  background-color: #ffffff;
+  border-radius: 10px;
+  overflow-y: hidden;
+}
+
+.nav-link {
+  color: #495057;
+  font-size: 15px;
+  font-family: "Poppins", sans-serif;
+  font-weight: 600;
+}
+
+.nav-link:hover {
+  background-color: #9e2950;
+  border-radius: 5px;
+  color: white;
+}
+
+.sidebar i.bi {
+  margin-right: 7px;
+  background-color: white;
+  padding: 5px;
+  border-radius: 10px;
+}
+
+.nav-link:hover i.bi {
+  color: red;
+}
+.sidebar-logo img {
+  max-width: 100%;
+  height: auto;
+}
+@media (max-width: 768px) {
+  .sidebar-logo img {
+    max-width: 70%;
+    /* Adjust this value as needed */
+    margin: 0 auto;
+    display: block;
+  }
+}
+
+.togglemobile{
+  position: fixed !important;
+  z-index: 1045;
+  top: 15 !important;
+  left: 150;
+  margin-top: 10px;
+}
+.sidenavmobile{
+  width: 360px !important;
+}
+span .badge .bg-danger{
+  background-color: #9e2950 !important;
+  font-weight: bold !important;
+}
+/* @media (min-width: 768px) {
+    .mobilechatsidebar {
+        flex: 0 0 auto;
+        width: 40%;
+    }
+} */
+/* @media (min-width: 768px){
+  .mobilschatwindow{
+    flex: 0 0 auto;
+    width: 60%;
+  }
+} */
+ 

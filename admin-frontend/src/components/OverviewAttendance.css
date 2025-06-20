@@ -1,0 +1,31 @@
+/* OverviewAttendance.css */
+
+.table-responsive {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  /* Enables smooth scrolling on iOS devices */
+}
+
+.table {
+  min-width: 1000px;
+  /* Adjust this value based on your table columns' total width */
+}
+
+@media (max-width: 768px) {
+  .table-responsive {
+    padding: 0 15px;
+    overflow-x: auto;
+  }
+
+  .table {
+    min-width: 100%;
+    /* Adjust this value based on your table columns' total width */
+    width: 100%;
+    /* Full width */
+    overflow-x: auto;
+    /* Enable horizontal scrolling */
+    border-collapse: collapse;
+    /* Remove borders between table cells */
+  }
+}
+

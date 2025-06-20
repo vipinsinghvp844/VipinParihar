@@ -1,0 +1,85 @@
+/* .container{
+  padding: 0px 0px !important;
+} */
+.profile-container {
+  position: relative;
+  text-align: center;
+  padding-top: 5px;
+}
+
+.popup-dropdown {
+  position: absolute;
+  top: 100%;
+  /* Adjust to appear below the profile image */
+  right: 0;
+  background-color: white;
+  border: 1px solid #ccc;
+  padding: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  width: 250px;
+  /* Adjust as needed */
+}
+
+.popup-profile-image {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  margin-bottom: 10px;
+  object-fit: cover;
+}
+
+.popup-close {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  cursor: pointer;
+}
+
+.manage-account-link {
+  display: block;
+  margin: 10px 0;
+}
+
+.popup-logout-button {
+  display: block;
+  width: 100%;
+}
+.USERNAMEHEAD {
+  font-size: 14px;
+  align-self: center;
+  padding: 0px 10px;
+}
+
+/*notification bell*/
+
+.notification-badge {
+  position: absolute;
+  top: 2px;
+  right: 285px;
+  background: red;
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.chat-badge {
+  position: absolute;
+  top: -12px;
+  right: -12px;
+  background: red;
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

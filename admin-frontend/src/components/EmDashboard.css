@@ -1,0 +1,47 @@
+.topbar {
+  background-color: #f8f9fa;
+  padding: 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-top: 10px;
+}
+
+.dashboard-card {
+  margin-bottom: 20px;
+  margin-top: 10px;
+  padding: 20px;
+  border: none;
+  background-color: #ffffff;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+h3.text-center {
+  color: #343a40;
+}
+
+@media (max-width: 576px) {
+  .dashboard-card {
+    padding: 15px;
+  }
+}
+
+@media (min-width: 768px) {
+  .dashboard-card {
+    padding: 20px;
+  }
+}
+
+@media (min-width: 992px) {
+  .dashboard-card {
+    padding: 25px;
+  }
+}
+.notification{
+  text-align: right;
+}
+.Notificationicon{
+  color: #495057;
+  font-size: 30px;
+}
+.Notificationicon:hover{
+  color:red;
+}

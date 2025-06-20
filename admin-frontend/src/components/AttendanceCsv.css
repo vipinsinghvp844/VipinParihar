@@ -1,0 +1,38 @@
+.bg-success {
+  background-color: #28a745 !important;
+}
+
+.bg-danger {
+  background-color: #dc3545 !important;
+}
+
+.bg-warning {
+  background-color: #ffc107 !important;
+}
+
+.text-white {
+  color: #fff !important;
+}
+
+.text-dark {
+  color: #343a40 !important;
+}
+.fullscreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: white;
+  z-index: 9999;
+  overflow: auto;
+  padding: 20px;
+}
+th.fontsizetest{
+  font-size: 11px !important;
+    padding: 4px !important;
+}
+td.coustomclass{
+  font-size: 10px !important;
+  padding: 8px 0px !important;
+}

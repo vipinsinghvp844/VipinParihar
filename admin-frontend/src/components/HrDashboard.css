@@ -1,0 +1,61 @@
+.hr-dashboard-container {
+  padding: 15px;
+}
+
+/* Responsive topbar */
+.topbar {
+  padding: 10px 0;
+}
+
+.notification {
+  text-align: right;
+}
+
+.Notificationicon {
+  font-size: 1.5rem;
+  color: #343a40;
+}
+
+/* Card styles */
+.dashboard-card {
+  border: none;
+  background-color: #f8f9fa;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+}
+
+.dashboard-card h5 {
+  font-size: 1.25rem;
+  color: #343a40;
+}
+
+.dashboard-card .card-body {
+  text-align: center;
+}
+
+/* Media queries for responsiveness */
+@media (max-width: 767.98px) {
+  .topbar h3 {
+    font-size: 1.5rem;
+  }
+
+  .dashboard-card {
+    margin-bottom: 15px;
+  }
+
+  .Notificationicon {
+    font-size: 1.25rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .dashboard-card {
+    height: 100%;
+  }
+}
+
+@media (min-width: 1200px) {
+  .dashboard-card {
+    padding: 20px;
+  }
+}

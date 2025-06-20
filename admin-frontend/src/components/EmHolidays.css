@@ -1,0 +1,21 @@
+.highlight-today {
+  background-color: #ffcccc !important;
+  font-weight: bold;
+}
+
+.highlight-holiday {
+  background-color: #ffeb3b;
+  border-radius: 50%;
+  width: 100%;
+  height: 100%;
+}
+
+@media (max-width: 768px) {
+  .form-row .col-md-4 {
+    margin-bottom: 10px;
+  }
+
+  .form-row .col-md-4:last-child {
+    margin-bottom: 0;
+  }
+}

@@ -1,0 +1,23 @@
+.leave-policies-container {
+  padding: 20px;
+  background-color: #f8f9fa;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.leave-policies-form {
+  margin-bottom: 30px;
+}
+
+.leave-policies-table {
+  margin-top: 20px;
+}
+
+.leave-policies-table th,
+.leave-policies-table td {
+  text-align: center;
+}
+
+.leave-policies-table button {
+  margin: 0 5px;
+}
