@@ -1,0 +1,14 @@
+# Node modules
+admin-frontend/node_modules/
+admin-backend/node_modules/
+
+# Build files
+admin-frontend/build/
+admin-backend/dist/
+
+# Environment variables
+admin-frontend/.env
+admin-backend/.env
+
+# Logs
+*.log
