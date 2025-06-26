@@ -150,7 +150,7 @@ exports.addAttendance = async (req, res) => {
 
 exports.getUserAttendance = async (req, res) => {
   try {
-    const { month, year, userId } = req.query;
+    const { userId, month, year} = req.query;
 
     if (req.user.role !== "admin" && req.user.role !== "hr") {
       return res.status(403).json({ message: "Access denied" });
@@ -201,6 +201,36 @@ exports.getUserAttendanceIdAndDate = async (req, res) => {
       user_id: userId,
       date: { $gte: start, $lte: end }
     });
+
+    res.status(200).json({
+      message: "Attendance fetched successfully",
+      data: getAttendanceData,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Attendance fetch failed" });
+  }
+};
+// get attendance only date
+
+exports.getUserAttendanceByDate = async (req, res) => {
+  try {
+    const { role } = req.user;
+    const inputDate = req.params.date || new Date().toISOString().split("T")[0];
+    if(role !== "admin" && role !== "hr"){
+      return res.status(400).json({ message: "Only admin or HR can get attendance" });
+    }
+    const start = new Date(inputDate);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(inputDate);
+    end.setHours(23, 59, 59, 999);
+    const getAttendanceData = await attendanceData.find({
+      date: { $gte: start, $lte: end }
+    });
+
+    if (getAttendanceData.length === 0) {
+      return res.status(404).json({ message: "No attendance data found for this date" });
+    }
 
     res.status(200).json({
       message: "Attendance fetched successfully",

@@ -39,14 +39,7 @@ const EmployeePerDetail = () => {
         const response = await axios.get(
           `${import.meta.env.VITE_API_PERSONAL_INFO}/${id}`
         );
-        // console.log(response.data);
-
-        // const data = response.data;
-        // if (data.date_of_leaving !== "0000-00-00") {
-        //   data.status = "Inactive";
-        // } else {
-        //   data.status = "Active";
-        // }
+   
         setEmployeeDetails(response.data);
         // console.log("Employee Details:", response.data);
       } catch (error) {
@@ -64,9 +57,14 @@ const EmployeePerDetail = () => {
     const fetchBasicDetails = async () => {
       try {
         const response = await axios.get(
-          `${import.meta.env.VITE_API_CUSTOM_USERS}/${id}`
+          `http://localhost:5000/api/auth/get-user-by-id/${id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("authtoken")}`,
+            },
+          }
         );
-        setBasicInfo(response.data);
+        setBasicInfo(response.data.data);
         // console.log("Basic Info:", response.data);
       } catch (error) {
         setError("Error fetching basic info.");
@@ -90,17 +88,21 @@ const EmployeePerDetail = () => {
     try {
       if (modalType === "Basic Info") {
         await axios.put(
-          `${import.meta.env.VITE_API_CUSTOM_USERS}/${id}`,
-          currentEditData
+          `http://localhost:5000/api/auth/updateuser/${id}`,
+          currentEditData,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("authtoken")}`,
+              "Content-Type": "application/json",
+            },
+          }
         );
+        console.log(currentEditData,"========");
+        
       } else if (
         (modalType === "Personal Information", "Bank Details", "Other Details")
       ) {
-        // if (currentEditData.date_of_leaving !== "0000-00-00") {
-        //   currentEditData.status = "Inactive";
-        // } else {
-        //   currentEditData.status = "Active";
-        // }
+  
         await axios.put(
           `${import.meta.env.VITE_API_PERSONAL_INFO}/${id}`,
           currentEditData
@@ -108,15 +110,12 @@ const EmployeePerDetail = () => {
       }
 
       setShowModal(false);
-      window.location.reload();
     } catch (error) {
       console.error("Error saving data:", error);
       setError("Error saving data.");
     }
   };
 
-  // if (loading) return <p>Loading...</p>;
-  // if (error) return <Alert variant="danger">{error}</Alert>;
 
   return (
     <Container className="p-5">
@@ -155,10 +154,10 @@ const EmployeePerDetail = () => {
               {basicInfo ? (
                 <>
                   <Card.Text>
-                    <strong>First Name:</strong> {basicInfo.first_name}
+                    <strong>First Name:</strong> {basicInfo.firstname}
                   </Card.Text>
                   <Card.Text>
-                    <strong>Last Name:</strong> {basicInfo.last_name}
+                    <strong>Last Name:</strong> {basicInfo.lastname}
                   </Card.Text>
                   <Card.Text>
                     <strong>Employee Username:</strong> {basicInfo.username}
@@ -351,11 +350,11 @@ const EmployeePerDetail = () => {
                   <Form.Label>First Name</Form.Label>
                   <Form.Control
                     type="text"
-                    value={currentEditData.first_name || ""}
+                    value={currentEditData.firstname || ""}
                     onChange={(e) =>
                       setCurrentEditData({
                         ...currentEditData,
-                        first_name: e.target.value,
+                        firstname: e.target.value,
                       })
                     }
                   />
@@ -364,11 +363,11 @@ const EmployeePerDetail = () => {
                   <Form.Label>Last Name</Form.Label>
                   <Form.Control
                     type="text"
-                    value={currentEditData.last_name || ""}
+                    value={currentEditData.lastname || ""}
                     onChange={(e) =>
                       setCurrentEditData({
                         ...currentEditData,
-                        last_name: e.target.value,
+                        lastname: e.target.value,
                       })
                     }
                   />
@@ -508,12 +507,6 @@ const EmployeePerDetail = () => {
                   />
                 </Form.Group>
                 <Form.Group controlId="status">
-                  {/* <Form.Label>Status</Form.Label>
-                  <Form.Control
-                    type="text"
-                    value={currentEditData.status || ''}
-                    readOnly // Make this field read-only to prevent manual changes
-                  /> */}
                 </Form.Group>
                 <Form.Group controlId="date_of_leaving">
                   <Form.Label>Date of Leaving</Form.Label>
@@ -525,7 +518,6 @@ const EmployeePerDetail = () => {
                       setCurrentEditData({
                         ...currentEditData,
                         date_of_leaving: newDateOfLeaving,
-                        // status: newDateOfLeaving ? "Inactive" : "Active" // Automatically update status
                       });
                     }}
                   />

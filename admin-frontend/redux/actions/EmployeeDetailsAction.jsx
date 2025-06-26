@@ -91,18 +91,18 @@ export const GetAttendanceDataAction = () => async (dispatch) => {
 };
 // get attendance data only current date
 
-export const GetAttendanceDataActionByDate = () => async (dispatch) => {
+export const GetAttendanceDataActionByDate = (viewDate) => async (dispatch) => {
   const currentDate = new Date().toISOString().split("T")[0];
   try {
     const attendanceResponse = await axios.get(
-      `${import.meta.env.VITE_API_GET_ATTENDANCE}?date=${currentDate}`,
+      `http://localhost:5000/api/attendance/attendance-get-by-date/${viewDate}`,
       {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("authtoken")}`,
         },
       }
     );
-    const attendanceData = attendanceResponse.data || [];
+    const attendanceData = attendanceResponse.data.data || [];
     dispatch(TotalAttendanceReduserByDate(attendanceData));
     return attendanceData;
   } catch (error) {
@@ -112,21 +112,17 @@ export const GetAttendanceDataActionByDate = () => async (dispatch) => {
 
 export const GetAttendanceDataActionById =
   (month, year) => async (dispatch) => {
-    const userId = localStorage.getItem("user_id");
     const formattedMonth = month.toString().padStart(2, "0");
     try {
       const attendanceResponse = await axios.get(
-        `${
-          import.meta.env.VITE_API_GET_ATTENDANCE
-        }/${userId}?month=${formattedMonth}&year=${year}`,
+        `http://localhost:5000/api/attendance/get-Attendance-by-id?month=${formattedMonth}&year=${year}`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("authtoken")}`,
           },
         }
       );
-
-      const attendanceData = attendanceResponse.data || [];
+      const attendanceData = attendanceResponse.data.data || [];
 
       dispatch(GetAttendanceIdReduser(attendanceData));
       return attendanceData;

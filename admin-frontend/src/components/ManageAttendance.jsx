@@ -15,21 +15,19 @@ import { FaEye } from "react-icons/fa";
 import AddAttendance from "./AddAttendance";
 import LoaderSpiner from "./LoaderSpiner";
 import "./ManageAttendance.css"; // Import the custom CSS file
-import { useDispatch, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 
 const ManageAttendance = () => {
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10; // Items to show per page
+  const itemsPerPage = 10;
   const [employees, setEmployees] = useState([]);
   const [errorMessage, setErrorMessage] = useState("");
-  // const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const [show, setShow] = useState(false);
-  const [isLoading, setIsLoading] = useState("false");
+  const [isLoading, setIsLoading] = useState(false);
   const handleClose = () => setShow(false);
   const handleShow = () => setShow(true);
-  const dispatch = useDispatch();
-  const { TotalUsers, TotalAttendance, TotalEmployeeInLeave } = useSelector(
+  const { TotalUsers } = useSelector(
     ({ EmployeeDetailReducers }) => EmployeeDetailReducers
   );
 
@@ -37,14 +35,7 @@ const ManageAttendance = () => {
     const fetchEmployees = async () => {
       setIsLoading(true);
       try {
-        // const response = await axios.get(
-        //   `${import.meta.env.VITE_API_CUSTOM_USERS}`
-        // );
-        const employeeUsers = TotalUsers.filter(
-          (user) => user.role === "employee" || user.role === "hr"
-        );
-        // console.log(employeeUsers, "======check hr");
-
+        const employeeUsers = TotalUsers;
         setEmployees(employeeUsers);
       } catch (error) {
         console.error("Error fetching employees:", error);
@@ -55,20 +46,14 @@ const ManageAttendance = () => {
     };
 
     fetchEmployees();
-  }, []);
+  }, [TotalUsers]);
 
   const handleAttendanceDetails = async (userId) => {
     try {
-      // const response = await axios.get(
-      //   `${import.meta.env.VITE_API_CUSTOM_USERS}/${userId}`, {
-      //     headers: {
-      //       Authorization: `Bearer ${localStorage.getItem("authtoken")}`,
-      //     }
-      //   }
-      // );
+      const user = employees.find((emp) => emp._id === userId);
       navigate(`/employee-attendance/${userId}`, {
         state: {
-          attendanceDetails: employees,
+          name: user ? user.firstname + " " + user.lastname : "Unknown User",
         },
       });
     } catch (error) {
@@ -78,14 +63,7 @@ const ManageAttendance = () => {
   };
   const handlePersonalDetails = async (userId) => {
     try {
-      // const response = await axios.get(
-      //   `${import.meta.env.VITE_API_CUSTOM_USERS}/${userId}`
-      // );
-      navigate(`/personal-detail/${userId}`, {
-        state: {
-          personalDetails: employees,
-        },
-      });
+      navigate(`/personal-detail/${userId}`);
     } catch (error) {
       console.error("Error fetching personal details:", error);
       setErrorMessage("Failed to fetch personal details.");
@@ -101,8 +79,6 @@ const ManageAttendance = () => {
   };
 
   const totalPages = Math.ceil(employees.length / itemsPerPage);
-  // console.log(totalPages, "pagepage");
-
   return (
     <Container className="manage-attendance-container">
       <Row className="mb-4 mt-2 d-flex align-items-center">
@@ -133,14 +109,13 @@ const ManageAttendance = () => {
         {errorMessage && <Alert variant="danger">{errorMessage}</Alert>}
         {isLoading ? (
           <div className="d-flex justify-content-center align-items-center">
-            <LoaderSpiner animation="border" />
+            <LoaderSpiner/>
           </div>
         ) : (
           <Table striped bordered hover responsive>
             <thead>
               <tr>
                 <th>No.</th>
-                <th>User ID</th>
                 <th>First Name</th>
                 <th>Last Name</th>
                 <th>Email</th>
@@ -153,9 +128,8 @@ const ManageAttendance = () => {
               {currentUsers.map((employee, index) => (
                 <tr key={employee.id}>
                   <td>{startIndex + index + 1}</td>
-                  <td>{employee.id}</td>
-                  <td>{employee.first_name}</td>
-                  <td>{employee.last_name}</td>
+                  <td>{employee.firstname}</td>
+                  <td>{employee.lastname}</td>
                   <td>{employee.email}</td>
                   <td>{employee.mobile}</td>
                   <td>{employee.role}</td>
@@ -163,7 +137,7 @@ const ManageAttendance = () => {
                     <Button
                       variant="info"
                       className="action-button"
-                      onClick={() => handlePersonalDetails(employee.id)}
+                      onClick={() => handlePersonalDetails(employee._id)}
                       title="View Personal Report"
                     >
                       <FaEye />
@@ -171,7 +145,7 @@ const ManageAttendance = () => {
                     <Button
                       variant="info"
                       className="action-button"
-                      onClick={() => handleAttendanceDetails(employee.id)}
+                      onClick={() => handleAttendanceDetails(employee._id)}
                       title="View Attendance Report"
                     >
                       <i className="bi bi-calendar-check"></i>
@@ -186,7 +160,7 @@ const ManageAttendance = () => {
           {Array.from({ length: totalPages }, (_, index) => (
             <Button
               key={index + 1}
-              variant="light"
+              variant={currentPage === index +1 ? "primary" : "light"}
               className={`page-button ${
                 currentPage === index + 1 ? "active" : ""
               }`}

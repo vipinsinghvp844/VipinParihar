@@ -16,6 +16,8 @@ import { setValueForSideBarClick } from "../../redux/redecer/EmployeeDetailReduc
 const MarkAttendance = () => {
   const [checkInTime, setCheckInTime] = useState(null);
   const [checkOutTime, setCheckOutTime] = useState(null);
+  const [breakInTimes, setBreakInTimes] = useState([]);
+  const [breakOutTimes, setBreakOutTimes] = useState([]);
   const [checkInDisabled, setCheckInDisabled] = useState(false);
   const [checkOutDisabled, setCheckOutDisabled] = useState(true);
   const [breakInDisabled, setBreakInDisabled] = useState(true);
@@ -27,8 +29,6 @@ const MarkAttendance = () => {
   const [modalAction, setModalAction] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const dispatch = useDispatch();
-  const [breakInTimes, setBreakInTimes] = useState([]);
-  const [breakOutTimes, setBreakOutTimes] = useState([]);
   const [disableButton, setDisableButton] = useState(false);
   const token = useSelector(({ AllReducers }) => AllReducers.token);
 
@@ -38,24 +38,14 @@ const MarkAttendance = () => {
 
   const [time, setTime] = useState("");
   const intervalRef = useRef(null);
-  const [timeDisabled, setTimeDisabled] = useState(false);
 
   useEffect(() => {
-    setTimeDisabled(true);
 
     intervalRef.current = setInterval(() => {
-      const localTime = new Intl.DateTimeFormat("en-US", {
-        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-        hourCycle: "h23",
-      }).format(new Date());
+      const localTime = new Date().toISOString();
 
       setTime(localTime);
     }, 1000);
-
-    setTimeDisabled(false);
 
     return () => {
       if (intervalRef.current) {
@@ -130,12 +120,14 @@ const MarkAttendance = () => {
 
         if (entry.clockOutTime) {
           setCheckOutTime(convertTo12HourFormat(entry.clockOutTime));
+          setCheckInDisabled(true);
           setCheckOutDisabled(true);
           setBreakInDisabled(true);
           setBreakOutDisabled(true);
         }
 
-        if (entry.breaks && entry.breaks.length > 0) {
+
+        if (entry.breaks && entry.breaks.length > 0 ) {
           entry.breaks.forEach((brk) => {
             if (brk.breakInTime) {
               breakInArray.push(convertTo12HourFormat(brk.breakInTime));
@@ -144,17 +136,20 @@ const MarkAttendance = () => {
               breakOutArray.push(convertTo12HourFormat(brk.breakOutTime));
             }
 
-            if (brk.breakInTime && !brk.breakOutTime) {
-              setBreakInDisabled(true);
-              setBreakOutDisabled(false);
-              setCheckOutDisabled(true);
-            }
+            if (!entry.clockOutTime) {
+              if (brk.breakInTime && !brk.breakOutTime) {
+                setBreakInDisabled(true);
+                setBreakOutDisabled(false);
+                setCheckOutDisabled(true);
+              }
 
-            if (brk.breakOutTime) {
-              setBreakOutDisabled(true);
-              setBreakInDisabled(false);
-              setCheckOutDisabled(false);
+              if (brk.breakOutTime) {
+                setBreakOutDisabled(true);
+                setBreakInDisabled(false);
+                setCheckOutDisabled(false);
+              }
             }
+            
           });
         }
 
@@ -221,13 +216,11 @@ const MarkAttendance = () => {
         setBreakOutDisabled(true);
         toast.success("Checked out successfully!");
       } else if (modalAction === "break_in") {
-        setBreakInTimes(time);
         setBreakInDisabled(true);
         setBreakOutDisabled(false);
         setCheckOutDisabled(true); 
         toast.info("Break started successfully!");
       } else if (modalAction === "break_out") {
-        setBreakOutTimes(time);
         setBreakOutDisabled(true);
         setBreakInDisabled(false);
         setCheckOutDisabled(false); 
@@ -286,7 +279,9 @@ const MarkAttendance = () => {
             >
               <i className="bi bi-box-arrow-in-right"></i>
               <p className="mb-0">
-                {breakInTimes || convertTo12HourFormat(time)}
+                {breakInTimes.length === 0
+                  ? convertTo12HourFormat(time)
+                  : breakInTimes[breakInTimes.length - 1]}
               </p>
               <p className="mb-0">Break In</p>
             </Button>
@@ -299,7 +294,9 @@ const MarkAttendance = () => {
             >
               <i className="bi bi-box-arrow-in-left"></i>
               <p className="mb-0">
-                {breakOutTimes || convertTo12HourFormat(time)}
+                {breakOutTimes.length === 0
+                  ? convertTo12HourFormat(time)
+                  : breakOutTimes[breakOutTimes.length - 1]}
               </p>
               <p className="mb-0">Break Out</p>
             </Button>

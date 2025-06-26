@@ -8,6 +8,32 @@ const genrateToken = (user) => {
   });
 };
 
+//change password
+
+exports.changePassword = async (req, res) => {
+  try {
+    const  userId  = req.user.id;
+    const { oldPassword, newPassword } = req.body;
+    const user = await User.findById(userId);
+    
+    if (!user) {
+      return res.status(400).json({ message: "User not found" });
+    }
+    const isMatch = await user.comparePassword(oldPassword);
+    
+    if (!isMatch) return res.status(400).json({ message: "Old password is incorrect" });
+
+    user.password = newPassword;
+    await user.save();
+    return res.status(200).json({ message: "Password changed successfully" });
+
+  } catch (err) {
+    console.log("Failed to update password", err);
+    return res.status(500).json({ message: "Server Error" });
+  }
+}
+
+// add to user 
 exports.registerUser = async (req, res) => {
   try {
     const {
@@ -21,7 +47,6 @@ exports.registerUser = async (req, res) => {
       password,
       role,
     } = req.body;
-    // console.log(firstname);
     const userExxist = await User.findOne({ email });
     if (userExxist)
       return res.status(400).json({ message: "User already exists" });
@@ -58,6 +83,7 @@ exports.registerUser = async (req, res) => {
   }
 };
 
+//login user
 exports.loginUser = async (req, res) => {
   try {
     const { username, email, password } = req.body;
@@ -80,6 +106,7 @@ exports.loginUser = async (req, res) => {
   }
 };
 
+// delete user only bby admin
 exports.deleteUser = async (req, res) => {
   try {
     console.log(req.user);
@@ -108,18 +135,16 @@ exports.deleteUser = async (req, res) => {
   }
 };
 
+//update user 
 exports.updateUser = async (req, res) => {
   try {
     const { id } = req.params;
-    const { updateData } = req.body; //name email etc
-    const { role } = req.user;
-    // if (role !== "admin") {
-    //   return res.status(403).json({ message: "Not authorized to update user" });
-    // }
+    const  currentEditData  = req.body; 
+  
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({ message: "Invalid user ID" });
     }
-    const updateUser = await User.findByIdAndUpdate(id, updateData, {
+    const updateUser = await User.findByIdAndUpdate(id, currentEditData, {
       new: true,
     });
     if (!updateUser) {
@@ -135,6 +160,7 @@ exports.updateUser = async (req, res) => {
   }
 };
 
+// get all user by admin and hr
 exports.getUserAll = async (req, res) => {
   try {
     const { _id: userId, role } = req.user;
@@ -173,6 +199,7 @@ exports.getUserAll = async (req, res) => {
   }
 };
 
+//get count only by admin and hr
 exports.getUserCount = async (req, res) => {
   try {
     const { _id: userId, role } = req.user;
@@ -192,6 +219,7 @@ exports.getUserCount = async (req, res) => {
     res.status(500).json({ message: "Failed to count users" });
   }
 };
+
 
 exports.getSingleUser = async (req, res) => {
   try {

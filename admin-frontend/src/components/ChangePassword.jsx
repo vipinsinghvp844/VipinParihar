@@ -3,39 +3,30 @@ import React, { useState } from "react";
 import { Container, Row, Col, Form, Button, Alert } from "react-bootstrap";
 import { useDispatch } from "react-redux";
 import { ChangePasswordAction } from "../../redux/actions/dev-aditya-action";
-// import { toast } from "react-toastify";
+import { toast } from "react-toastify";
 
 const ChangePassword = () => {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [message, setMessage] = useState("");
-  const [messageType, setMessageType] = useState(""); // 'success' or 'danger'
   const dispatch = useDispatch();
-  const userId = localStorage.getItem("user_id"); // Assume userId is stored in localStorage
 
   const handleChangePassword = async () => {
     if (newPassword !== confirmPassword) {
-      setMessage("New password and confirm password do not match");
-      setMessageType("danger");
+      toast.warning("New password and confirm password not match");
       return;
     }
     let body = {
-      user_id: userId,
-      current_password: currentPassword,
-      new_password: newPassword,
+      oldPassword: currentPassword,
+      newPassword: newPassword,
     };
     const response = await dispatch(ChangePasswordAction(body));
-    // console.log(response, "=============response");
     if (response) {
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
-      //   setMessage(response.data.message);
-      //   setMessageType("success");
     } else {
-      //   setMessage("Error changing password");
-      //   setMessageType("danger");
+      console.error("password chenge failed");
     }
   };
 
@@ -44,7 +35,6 @@ const ChangePassword = () => {
       <Row className="justify-content-md-center">
         <Col xs={12} md={6}>
           <h3 className="my-4">Change Password</h3>
-          {message && <Alert variant={messageType}>{message}</Alert>}
           <Form>
             <Form.Group controlId="currentPassword">
               <Form.Label>Current Password</Form.Label>

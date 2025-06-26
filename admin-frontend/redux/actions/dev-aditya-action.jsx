@@ -163,11 +163,16 @@ export const ProfilePicUploadAction = (base64Image) => async (dispatch) => {
 };
 
 export const ChangePasswordAction = (obj) => async (dispatch) => {
-  // console.log(obj, "===========object");
   try {
     const response = await axios.post(
       import.meta.env.VITE_API_CHANGE_PASSWORD,
-      obj
+       obj ,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("authtoken")}`,
+          "Content-Type": "application/json",
+        },
+      }
     );
     // console.log(response?.data?.message);
     toast.success(response?.data?.message);

@@ -13,91 +13,113 @@ import LoaderSpiner from "./LoaderSpiner";
 import { useDispatch, useSelector } from "react-redux";
 import { GetAttendanceDataActionByDate } from "../../redux/actions/EmployeeDetailsAction";
 import EditEmployeeAttendance from "./EditEmployeeAttendance";
+import CustomDropdown from "./CustomDropdown";
+
 function OverviewAttendance() {
   const [attendanceRecords, setAttendanceRecords] = useState([]);
-
-  const currentDate = new Date().toISOString().split("T")[0]; // Format to YYYY-MM-DD
-  const [isLoading, setIsLoading] = useState("false");
+  const [isLoading, setIsLoading] = useState(false);
   const [show, setShow] = useState(false);
   const handleClose = () => setShow(false);
   const handleShow = () => setShow(true);
   const dispatch = useDispatch();
+  const padZero = (num) => num.toString().padStart(2, "0");
+  const [viewDate, setViewDate] = useState(
+    new Date().toISOString().split("T")[0]
+  );
 
+  const handleDateChange = (date) => {
+    setViewDate(date);
+  };
+  const formatDateReadable = (dateStr) => {
+    const months = [
+      "jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
+    ];
+    const dateObj = new Date(dateStr);
+    const day = dateObj.getDate();
+    const month = months[dateObj.getMonth()];
+    const year = dateObj.getFullYear();
+    return `${day} ${month} ${year}`;
+  };
+  const dates = [...Array(7).keys()].map((offset) => {
+    const date = new Date();
+    date.setDate(date.getDate() - offset);
+    const iso = date.toISOString().split("T")[0];
+    return {
+      value: iso,
+      label: formatDateReadable(iso),
+    }
+  });
+ 
   useEffect(() => {
-    fetchAttendanceRecords();
-  }, []);
-
-  const fetchAttendanceRecords = async () => {
     setIsLoading(true);
-    try {
-      const data = await dispatch(GetAttendanceDataActionByDate());
+    const fetchAttendanceRecords = async () => {
+      try {
+        const data = await dispatch(GetAttendanceDataActionByDate(viewDate));
 
-      const todayRecord = data.filter((record) => record.date === currentDate);
-
-      const combinedData = todayRecord.reduce((acc, record) => {
-        let userRecord = acc.find(
-          (item) => item.user_id === record.user_id && item.date === record.date
+        const sortedData = data.sort(
+          (a, b) => new Date(b.date) - new Date(a.date)
         );
 
-        if (!userRecord) {
-          userRecord = {
-            user_id: record.user_id,
-            user_name: record.user_name,
-            date: record.date,
-            clock_in: "N/A",
-            clock_out: "N/A",
-            break_in: "N/A",
-            break_out: "N/A",
-            total_break_time: 0,
-          };
-          acc.push(userRecord);
-        }
+        const formattedData = sortedData.map((record) => ({
+          user_id: record.user_id,
+          username: record.username,
+          date: new Date(record.date).toLocaleDateString("en-IN"),
+          clock_in: record.clockInTime
+            ? convertTo12Hour(new Date(record.clockInTime))
+            : "NA",
+          clock_out: record.clockOutTime
+            ? convertTo12Hour(new Date(record.clockOutTime))
+            : "NA",
+          total_work: record.totalWork || "0m",
+          total_break: record.totalBreak,
+          breaks:
+            record.breaks?.map((brk) => ({
+              break_in: brk.breakInTime
+                ? convertTo12Hour(new Date(brk.breakInTime))
+                : "N/A",
+              break_out: brk.breakOutTime
+                ? convertTo12Hour(new Date(brk.breakOutTime))
+                : "N/A",
+              durations: brk.durations || "0m",
+            })) || [],
+        }));
 
-        switch (record.type) {
-          case "clock_in":
-            userRecord.clock_in = convertTo12HourFormat(record.time);
-            break;
-          case "clock_out":
-            userRecord.clock_out = convertTo12HourFormat(record.time);
-            break;
-          case "break_in":
-            userRecord.break_in = convertTo12HourFormat(record.time);
-            break;
-          case "break_out":
-            userRecord.break_out = convertTo12HourFormat(record.time);
-            break;
-          default:
-            break;
-        }
+        setAttendanceRecords(formattedData);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        setAttendanceRecords([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-        if (record.type === "break_out" && userRecord.break_in !== "N/A") {
-          const breakDuration =
-            (new Date(`1970-01-01T${record.time}Z`) -
-              new Date(`1970-01-01T${userRecord.break_in}Z`)) /
-            1000 /
-            60; // duration in minutes
-          userRecord.total_break_time += breakDuration;
-        }
+    fetchAttendanceRecords();
+  }, [viewDate]);
 
-        return acc;
-      }, []);
-
-      setAttendanceRecords(combinedData);
-      // setLoading(false);
-    } finally {
-      setIsLoading(false); // Set loading to false after fetching
+  const convertTo12Hour = (dateObj) => {
+    if (!(dateObj instanceof Date) || isNaN(dateObj.getTime())) {
+      return "Invalid Time";
     }
+
+    let hours = dateObj.getHours();
+    let minutes = dateObj.getMinutes();
+    const period = hours >= 12 ? "PM" : "AM";
+
+    hours = hours % 12 || 12;
+
+    return `${padZero(hours)}:${padZero(minutes)} ${period}`;
   };
-  function convertTo12HourFormat(time24) {
-    if (!time24) return "--:--"; // Handle null/undefined input gracefully
-    let [hours, minutes, seconds] = time24.split(":"); // Split the time string
-    hours = parseInt(hours, 10);
-
-    const period = hours >= 12 ? "PM" : "AM"; // Determine AM or PM
-    hours = hours % 12 || 12; // Convert 0 to 12 for midnight
-
-    return `${hours}:${minutes} ${period}`;
-  }
 
   return (
     <Container className="my-4">
@@ -113,11 +135,18 @@ function OverviewAttendance() {
             }}
           ></i>
         </Col>
-        <Col md={9}>
+        <Col md={7}>
           <h3 className="mt-2">Today Attendance</h3>
         </Col>
         <Col md={2}>
-          <Button onClick={handleShow}>Edit Ateendance</Button>
+          <CustomDropdown
+            title={`Date: ${formatDateReadable(viewDate)}`}
+            options={dates}
+            onSelect={handleDateChange}
+          />
+        </Col>
+        <Col md={2}>
+          <Button onClick={handleShow}>Edit Attendance</Button>
         </Col>
         <Offcanvas show={show} onHide={handleClose} placement="end">
           <Offcanvas.Header closeButton>
@@ -128,23 +157,22 @@ function OverviewAttendance() {
           </Offcanvas.Body>
         </Offcanvas>
       </Row>
-      <Table striped bordered hover responsive>
+      <Table striped bordered hover>
         <thead>
           <tr>
-            <th>No.</th>
-            <th> ID</th>
             <th>Date</th>
-            <th>Name</th>
+            <th>User Name</th>
             <th>Clock In</th>
             <th>Clock Out</th>
+            <th>Total Work</th>
             <th>Break In</th>
             <th>Break Out</th>
+            <th>Durations</th>
           </tr>
         </thead>
-
         <tbody>
           {isLoading ? (
-            <tr className="">
+            <tr>
               <td colSpan="9" className="text-center">
                 <div
                   className="d-flex justify-content-center align-items-center"
@@ -156,21 +184,37 @@ function OverviewAttendance() {
             </tr>
           ) : attendanceRecords.length > 0 ? (
             attendanceRecords.map((record, index) => (
-              <tr key={index}>
-                <td>{index + 1}</td>
-                <td>{record.user_id}</td>
-                <td>{record.date}</td>
-                <td>{record.user_name || "N/A"}</td>
-                <td>{record.clock_in}</td>
-                <td>{record.clock_out}</td>
-                <td>{record.break_in}</td>
-                <td>{record.break_out}</td>
-              </tr>
+              <React.Fragment key={index}>
+                <tr>
+                  <td>{record.date}</td>
+                  <td>{record.username}</td>
+                  <td>{record.clock_in}</td>
+                  <td>{record.clock_out}</td>
+                  <td>{record.total_work || 0}</td>
+                  <td colSpan="3">
+                    {record.breaks.length === 0 ? (
+                      "No Breaks"
+                    ) : (
+                      <Table bordered size="sm">
+                        <tbody>
+                          {record.breaks.map((breakItem, breakIndex) => (
+                            <tr key={breakIndex}>
+                              <td>{breakItem.break_in}</td>
+                              <td>{breakItem.break_out}</td>
+                              <td>{breakItem.durations}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </Table>
+                    )}
+                  </td>
+                </tr>
+              </React.Fragment>
             ))
           ) : (
             <tr>
-              <td colSpan="8" className="text-center">
-                No Today Attendance
+              <td colSpan="9" className="text-center">
+                No data available for the selected month and year.
               </td>
             </tr>
           )}
