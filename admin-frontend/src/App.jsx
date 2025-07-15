@@ -55,21 +55,20 @@ import { PersistGate } from "redux-persist/integration/react";
 import { ToastContainer } from "react-toastify";
 import { WebSocketProvider } from "./components/WebSocketContext.jsx";
 import AdminAddEmpLeave from "./components/AdminAddEmpLeave.jsx";
+import AddEmployee from "./components/AddEmployee";
 
 function App() {
   const [userRole, setUserRole] = useState(null);
   const [userId, setUserId] = useState(null);
-  const [pendingCount, setPendingCount] = useState(0); //sidebar notifications
   const handleLogin = (role, id) => {
     setUserRole(role);
     setUserId(id);
     localStorage.setItem("user", JSON.stringify({ roles: [role], id }));
   };
-  // const userId = localStorage.getItem("user_id")
   const handleLogout = () => {
-    setUserRole(null); // Reset user role
-    setUserId(null); // Reset user id
-    localStorage.removeItem("user"); // Clear user from local storage
+    setUserRole(null);
+    setUserId(null); 
+    localStorage.removeItem("user"); 
   };
 
   useEffect(() => {
@@ -81,7 +80,7 @@ function App() {
         const role = userData?.user?.role;
 
         if (role) {
-          setUserRole(role); // Assuming roles is an array and taking the first role
+          setUserRole(role); 
         } else {
           console.error("Roles is not defined or not an array or is empty");
         }
@@ -108,13 +107,12 @@ function App() {
           <>
             <main className="main">
               {userRole && (
-                <Sidebar userRole={userRole} pendingCount={pendingCount} />
+                <Sidebar userRole={userRole} />
               )}
               <div className="right-main-box">
                 <Header
                   userRole={userRole}
                   onLogout={handleLogout}
-                  pendingCount={pendingCount}
                 />
                 {children}
               </div>
@@ -153,7 +151,7 @@ function App() {
                   <Route
                     path="/leave-requests"
                     element={
-                      <LeaveRequests setPendingCount={setPendingCount} />
+                      <LeaveRequests/>
                     }
                   />
                   <Route path="/leave-policies" element={<LeavePolicies />} />
@@ -165,7 +163,9 @@ function App() {
                   <Route path="/all-employee" element={<AllEmpDetails />} />
                   <Route path="/edit-employee/:id" element={<EditEmployee />} />
                   <Route path="/add-attendance" element={<AddAttendance />} />
-                  <Route path="/add-employee" element={<AddNewEmployee />} />
+                  {/* <Route path="/add-employee" element={<AddNewEmployee />} /> */}
+                  <Route path="/add-employee" element={<AddEmployee />} />
+
                   <Route path="/manage-holidays" element={<ManageHolidays />} />
                   <Route path="/notification" element={<Notification />} />
                   <Route
@@ -174,29 +174,29 @@ function App() {
                   />
 
                   <Route path="/my-leaves" element={<EmployeeViewLeave />} />
-                  <Route path="/apply-leave" element={<ApplyLeave />}></Route>
+                  <Route path="/apply-leave" element={<ApplyLeave />} />
                   <Route path="/holidays" element={<Holidays />} />
                   <Route path="/our-shift" element={<OurShift />} />
-                  <Route path="birthday" element={<BirthdayMessages />} />
-                  <Route path="attendance-csv" element={<AttendanceCsv />} />
+                  <Route path="/birthday" element={<BirthdayMessages />} />
+                  <Route path="/attendance-csv" element={<AttendanceCsv />} />
                   <Route
                     path="/manage-your-account"
                     element={<ManageYourAccount />}
                   />
                   <Route
-                    path="today-attendance"
+                    path="/today-attendance"
                     element={<OverviewAttendance />}
                   />
                   <Route
-                    path="manage-attendance"
+                    path="/manage-attendance"
                     element={<ManageAttendance />}
                   />
-                  <Route path="my-attendance" element={<AttendanceRecord />} />
+                  <Route path="/my-attendance" element={<AttendanceRecord />} />
                   <Route path="/Calender" element={<DateCalendar />} />
-                  <Route
+                  {/* <Route
                     path="/add-employee-details"
                     element={<AddEmployeeDetails />}
-                  />
+                  /> */}
                   <Route
                     path="/personal-detail/:id"
                     element={<EmployeePerDetail />}
@@ -213,10 +213,6 @@ function App() {
                   />
                   <Route path="/documents" element={<EmDocuments />} />
                   <Route path="/chat" element={<ChatBox />} />
-                  <Route
-                    path="add-employee-leaves"
-                    element={<AdminAddEmpLeave />}
-                  />
                 </Routes>
               </Layout>
             </PersistGate>

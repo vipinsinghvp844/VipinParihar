@@ -21,8 +21,15 @@ const EditEmployee = ({ employeeId, show, handleClose }) => {
     const fetchEmployee = async () => {
       try {
         if (employeeId) {
-          const response = await axios.get(`${import.meta.env.VITE_API_CUSTOM_USERS}/${employeeId}`);
-          setEmployee(response.data);
+          const response = await axios.get(
+            `http://localhost:5000/api/auth/get-user-by-id/${employeeId}`,
+            {
+              headers: {
+                Authorization: `Bearer ${localStorage.getItem("authtoken")}`,
+              },
+            }
+          );
+          setEmployee(response.data.data);
         }
       } catch (error) {
         console.error("Error fetching employee:", error);
@@ -41,13 +48,28 @@ const EditEmployee = ({ employeeId, show, handleClose }) => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setEmployee({ ...employee, [name]: value });
+    const [objectName, key] = name.split(".");
+    setEmployee((prev)=>({
+      ...prev,
+      [objectName]: {
+        ...prev[objectName],
+        [key]:value,
+      },
+    }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.put(`${import.meta.env.VITE_API_CUSTOM_USERS}/${employeeId}`, employee);
+      await axios.put(
+        `http://localhost:5000/api/auth/updateuser/${employeeId}`,
+        employee,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("authtoken")}`,
+          },
+        }
+      );
       setSuccessMessage("Employee details updated successfully.");
       handleClose();
     } catch (error) {
@@ -72,8 +94,8 @@ const EditEmployee = ({ employeeId, show, handleClose }) => {
                   <Form.Label>First Name</Form.Label>
                   <Form.Control
                     type="text"
-                    name="first_name"
-                    value={employee.first_name}
+                    name="personalInfo.firstname"
+                    value={employee?.personalInfo?.firstname}
                     onChange={handleInputChange}
                     required
                   />
@@ -84,8 +106,8 @@ const EditEmployee = ({ employeeId, show, handleClose }) => {
                   <Form.Label>Last Name</Form.Label>
                   <Form.Control
                     type="text"
-                    name="last_name"
-                    value={employee.last_name}
+                    name="personalInfo.lastname"
+                    value={employee?.personalInfo?.lastname}
                     onChange={handleInputChange}
                     required
                   />
@@ -113,7 +135,6 @@ const EditEmployee = ({ employeeId, show, handleClose }) => {
                     name="username"
                     value={employee.username}
                     onChange={handleInputChange}
-                    
                     disabled
                   />
                 </Form.Group>
@@ -125,8 +146,8 @@ const EditEmployee = ({ employeeId, show, handleClose }) => {
                   <Form.Label>Mobile</Form.Label>
                   <Form.Control
                     type="text"
-                    name="mobile"
-                    value={employee.mobile}
+                    name="personalInfo.mobile"
+                    value={employee?.personalInfo?.mobile}
                     onChange={handleInputChange}
                     required
                   />
@@ -152,8 +173,8 @@ const EditEmployee = ({ employeeId, show, handleClose }) => {
                   <Form.Control
                     type="date"
                     rows={3}
-                    name="dob"
-                    value={employee.dob}
+                    name="personalInfo.dob"
+                    value={employee?.personalInfo?.dob}
                     onChange={handleInputChange}
                     required
                   />
@@ -165,8 +186,8 @@ const EditEmployee = ({ employeeId, show, handleClose }) => {
                   <Form.Control
                     as="textarea"
                     rows={3}
-                    name="address"
-                    value={employee.address}
+                    name="additionalInfoDetail.address"
+                    value={employee?.additionalInfoDetail?.address}
                     onChange={handleInputChange}
                     required
                   />

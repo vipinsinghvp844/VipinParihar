@@ -1,6 +1,8 @@
 const mongoose = require("mongoose");
 const attendanceData = require("../models/attendanceApi");
+const leaveSchema = require('../models/leaveModel');
 const { response } = require("express");
+const User = require("../models/User");
 
 // 🧠 Helper function to calculate break durations
 const getBreakDurations = (breaks) => {
@@ -335,3 +337,86 @@ exports.updateAttendance = async (req, res) => {
       .json({ message: "Attendance update failed", error: err.message });
   }
 };
+
+exports.userAttendanceCountSummary = async (req, res) => {
+  try {
+    const { _id: userId, role } = req.user;
+    const { date } = req.params;
+
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ message: "Invalid user ID" });
+    }
+    if (role !== "admin" && role !== "hr") {
+      return res.status(403).json({ message: "Access denied" });
+    }
+    if (!date) {
+      return res.status(400).json({ message: "Date is required" });
+    }
+
+    const formattedDate = new Date(date);
+    formattedDate.setHours(0, 0, 0, 0); 
+
+    const nextDate = new Date(formattedDate);
+    nextDate.setDate(nextDate.getDate() + 1);
+
+    const allUsers = await User.find({}, "username");
+
+    const allUsernames = allUsers.map((u) => u.username);
+
+    const presentRecords = await attendanceData.find({
+      date: { $gte: formattedDate, $lt: nextDate },
+      clockInTime: { $exists: true, $ne: null },
+    });
+
+    const presentUsernamesSet = new Set(
+      presentRecords.map((entry) => entry.username).filter(Boolean)
+    );
+
+    const leaveRecords = await leaveSchema.find({
+      start_date: { $lte: formattedDate },
+      end_date: { $gte: formattedDate },
+      status: "accepted",
+    });
+
+    const leaveUsernamesSet = new Set(
+      leaveRecords.map((entry) => entry.username).filter(Boolean)
+    );
+
+    const presentUsers = allUsernames.filter((uname) =>
+      presentUsernamesSet.has(uname)
+    );
+
+    const leaveUsers = allUsernames.filter((uname) =>
+      leaveUsernamesSet.has(uname)
+    );
+
+    const absentUsers = allUsernames.filter(
+      (uname) =>
+        !presentUsernamesSet.has(uname) && !leaveUsernamesSet.has(uname)
+    );
+
+    return res.status(200).json({
+      date: formattedDate.toLocaleDateString("en-CA"),
+      totalUsers: allUsernames.length,
+      present: {
+        total: presentUsers.length,
+        users: presentUsers,
+      },
+      leave: {
+        total: leaveUsers.length,
+        users: leaveUsers,
+      },
+      absent: {
+        total: absentUsers.length,
+        users: absentUsers,
+      },
+    });
+  } catch (err) {
+    console.error("Failed to fetch user attendance summary", err);
+    res.status(500).json({
+      message: "Failed to fetch attendance summary",
+      error: err.message,
+    });
+  }
+};
+

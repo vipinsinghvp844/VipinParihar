@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Button, Table, Container, Row, Col, Modal } from "react-bootstrap";
-import axios from "axios";
 import { toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css"; // Import the toastify CSS
+import "react-toastify/dist/ReactToastify.css";
 import LoaderSpiner from "./LoaderSpiner";
 import "./MarkAttendance.css";
 import {
@@ -12,6 +11,7 @@ import {
 import { useDispatch, useSelector } from "react-redux";
 import { LoginUserAction } from "../../redux/actions/dev-aditya-action";
 import { setValueForSideBarClick } from "../../redux/redecer/EmployeeDetailReducers";
+import { format } from "date-fns";
 
 const MarkAttendance = () => {
   const [checkInTime, setCheckInTime] = useState(null);
@@ -63,18 +63,15 @@ const MarkAttendance = () => {
   };
 
   const currentDate = getCurrentDate();
-
-  function convertTo12HourFormat(time24) {
-    if (!time24) return "--:--";
-    let [hours, minutes, seconds] = time24.split(":");
-    hours = parseInt(hours, 10);
-
-    const period = hours >= 12 ? "PM" : "AM";
-    hours = hours % 12 || 12;
-
-    return `${hours}:${minutes}:${seconds} ${period} `;
-  }
-
+  const safeFormat = (value, fmt = "hh:mm:ss a") => {
+    try {
+      const date = new Date(value);
+      if (isNaN(date)) return "--:--:--";
+      return format(date, fmt);
+    } catch {
+      return "--:--:--";
+    }
+  };
   const fetchData = async () => {
     try {
       const requestData = {
@@ -112,14 +109,16 @@ const MarkAttendance = () => {
 
       response.forEach((entry) => {
         if (entry.clockInTime) {
-          setCheckInTime(convertTo12HourFormat(entry.clockInTime));
+          setCheckInTime(safeFormat(new Date(entry.clockInTime), "hh:mm:ss a"));
           setCheckInDisabled(true);
           setBreakInDisabled(false);
           setCheckOutDisabled(false);
         }
 
         if (entry.clockOutTime) {
-          setCheckOutTime(convertTo12HourFormat(entry.clockOutTime));
+          setCheckOutTime(
+            safeFormat(new Date(entry.clockOutTime), "hh:mm:ss a")
+          );
           setCheckInDisabled(true);
           setCheckOutDisabled(true);
           setBreakInDisabled(true);
@@ -130,10 +129,14 @@ const MarkAttendance = () => {
         if (entry.breaks && entry.breaks.length > 0 ) {
           entry.breaks.forEach((brk) => {
             if (brk.breakInTime) {
-              breakInArray.push(convertTo12HourFormat(brk.breakInTime));
+              breakInArray.push(
+                safeFormat(new Date(brk.breakInTime), "hh:mm:ss a")
+              );
             }
             if (brk.breakOutTime) {
-              breakOutArray.push(convertTo12HourFormat(brk.breakOutTime));
+              breakOutArray.push(
+                safeFormat(new Date(brk.breakOutTime), "hh:mm:ss a")
+              );
             }
 
             if (!entry.clockOutTime) {
@@ -251,7 +254,7 @@ const MarkAttendance = () => {
             >
               <i className="bi bi-box-arrow-in-right"></i>
               <p className="mb-0">
-                {checkInTime || convertTo12HourFormat(time)}
+                {checkInTime || safeFormat(new Date(time), "hh:mm:ss a")}
               </p>
               <p className="mb-0">Check In</p>
             </Button>
@@ -264,7 +267,7 @@ const MarkAttendance = () => {
             >
               <i className="bi bi-box-arrow-in-left"></i>
               <p className="mb-0">
-                {checkOutTime || convertTo12HourFormat(time)}
+                {checkOutTime || safeFormat(new Date(time), "hh:mm:ss a")}
               </p>
               <p className="mb-0">Check Out</p>
             </Button>
@@ -280,7 +283,7 @@ const MarkAttendance = () => {
               <i className="bi bi-box-arrow-in-right"></i>
               <p className="mb-0">
                 {breakInTimes.length === 0
-                  ? convertTo12HourFormat(time)
+                  ? safeFormat(new Date(time), "hh:mm:ss a")
                   : breakInTimes[breakInTimes.length - 1]}
               </p>
               <p className="mb-0">Break In</p>
@@ -295,7 +298,7 @@ const MarkAttendance = () => {
               <i className="bi bi-box-arrow-in-left"></i>
               <p className="mb-0">
                 {breakOutTimes.length === 0
-                  ? convertTo12HourFormat(time)
+                  ? safeFormat(new Date(time), "hh:mm:ss a")
                   : breakOutTimes[breakOutTimes.length - 1]}
               </p>
               <p className="mb-0">Break Out</p>

@@ -7,6 +7,7 @@ require('dotenv').config();
 const authRoutes = require('./routes/authRoutes');
 const userImageRoutes = require('./routes/uploadRoutes');
 const attendanceRoutes = require('./routes/attendanceRoutes');
+const leaveRoutes = require('./routes/leaveRoute');
 
 const app = express();
 
@@ -19,6 +20,7 @@ app.use(cors());
 app.use('/api/auth', authRoutes);              // e.g., /api/auth/login, /register, /deleteuser ,/updateuser, get-user
 app.use('/api/images', userImageRoutes);     // e.g., /api/uploads/upload,delete,getbyuserid,getall
 app.use('/api/attendance', attendanceRoutes);//  e.g., /api/attendance/mark-attendance,get-all-attendance,update
+app.use('/api/leave', leaveRoutes);          //
 
 // Start Server
 const PORT = process.env.PORT || 5000;

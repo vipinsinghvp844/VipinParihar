@@ -9,10 +9,13 @@ function TodayAbsent() {
   const [absentCount, setAbsentCount] = useState(0);
   const [absentUsers, setAbsentUsers] = useState([]);
   const [absentUserIds, setAbsentUserIds] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+
   const currentDate = new Date().toISOString().split("T")[0]; // Format to YYYY-MM-DD
   const { TotalUsers, TotalAttendance, TotalEmployeeInLeave } = useSelector(
     ({ EmployeeDetailReducers }) => EmployeeDetailReducers
   );
+
 
   // console.log(TotalEmployeeInLeave, "=====TotalUsers");
 
@@ -22,73 +25,92 @@ function TodayAbsent() {
     fetchAbsentUsers();
   }, [ TotalAttendance]);
 
-  const fetchAbsentUsers = async () => {
-    try {
-      // Fetch all users
-      const usersData = await dispatch(GetTotalUserAction());
-      // const usersData = TotalUsers || [];
+  // const fetchAbsentUsers = async () => {
+  //   try {
+  //     // Fetch all users
+  //     const usersData = await dispatch(GetTotalUserAction());
+  //     // const usersData = TotalUsers || [];
 
-      // Filter out users with the role of "admin"
-      const nonAdminUsers = usersData.filter((user) => user.role !== "admin");
-      const totalLeaveUsers = await dispatch(GetEmployeeLeaveDetailAction());
-      const onLeaveUsers = totalLeaveUsers
-        .filter((leave) => {
-          const startDate = new Date(leave.start_date)
-            .toISOString()
-            .split("T")[0];
-          const endDate = new Date(leave.end_date).toISOString().split("T")[0];
-          return (
-            leave.status === "Accept" &&
-            startDate <= currentDate &&
-            endDate >= currentDate
-          );
-        })
-        .map((leave) => leave.user_id.toString()); // Convert IDs to strings
+  //     // Filter out users with the role of "admin"
+  //     const nonAdminUsers = usersData.filter((user) => user.role !== "admin");
+  //     const totalLeaveUsers = await dispatch(GetEmployeeLeaveDetailAction());
+  //     const onLeaveUsers = totalLeaveUsers
+  //       .filter((leave) => {
+  //         const startDate = new Date(leave.start_date)
+  //           .toISOString()
+  //           .split("T")[0];
+  //         const endDate = new Date(leave.end_date).toISOString().split("T")[0];
+  //         return (
+  //           leave.status === "Accept" &&
+  //           startDate <= currentDate &&
+  //           endDate >= currentDate
+  //         );
+  //       })
+  //       .map((leave) => leave.user_id.toString()); // Convert IDs to strings
 
-      // Initialize present users array
-      const presentUsers = TotalAttendance.filter(
-        (attendance) => attendance.date === currentDate
-      ).map((attendance) => attendance.user_id.toString());
+  //     // Initialize present users array
+  //     const presentUsers = TotalAttendance.filter(
+  //       (attendance) => attendance.date === currentDate
+  //     ).map((attendance) => attendance.user_id.toString());
 
-      // Calculate the list of absent users
-      const nonAdminUserIds = nonAdminUsers.map((user) => user.id.toString()); // Convert IDs to strings
+  //     // Calculate the list of absent users
+  //     const nonAdminUserIds = nonAdminUsers.map((user) => user.id.toString()); // Convert IDs to strings
 
-      const presentOrOnLeaveUserIds = new Set([
-        ...presentUsers,
-        ...onLeaveUsers,
-      ]);
-      // console.log(presentOrOnLeaveUserIds,"================================ppresentonleve");
+  //     const presentOrOnLeaveUserIds = new Set([
+  //       ...presentUsers,
+  //       ...onLeaveUsers,
+  //     ]);
+  //     // console.log(presentOrOnLeaveUserIds,"================================ppresentonleve");
 
-      const absentUserIds = nonAdminUserIds.filter(
-        (userId) => !presentOrOnLeaveUserIds.has(userId)
-      );
+  //     const absentUserIds = nonAdminUserIds.filter(
+  //       (userId) => !presentOrOnLeaveUserIds.has(userId)
+  //     );
 
-      const absentUserNames = nonAdminUsers
-        .filter((user) => absentUserIds.includes(user.id.toString()))
-        .map((user) => user.username);
+  //     const absentUserNames = nonAdminUsers
+  //       .filter((user) => absentUserIds.includes(user.id.toString()))
+  //       .map((user) => user.username);
 
-      setAbsentUserIds(absentUserIds);
-      setAbsentCount(absentUserNames.length);
+  //     setAbsentUserIds(absentUserIds);
+  //     setAbsentCount(absentUserNames.length);
 
-      setAbsentUsers(absentUserNames);
-    } catch (error) {
-      console.error("Error fetching data:", error);
-    }
-  };
+  //     setAbsentUsers(absentUserNames);
+  //   } catch (error) {
+  //     console.error("Error fetching data:", error);
+  //   }
+  // };
 
   // useEffect(() => {}, []);
 
+  const fetchAbsentUsers = async () => {
+    setIsLoading(true);
+    try {
+      const currentDate = await new Date().toISOString().split("T")[0];
+      const res = await axios.get(
+        `http://localhost:5000/api/attendance/attendanc-count/${currentDate}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("authtoken")}`,
+          },
+        }
+      );
+      setAbsentCount(res.data.absent.total);
+      setAbsentUsers(res.data.absent.users);
+      setIsLoading(false);
+    } catch (error) {
+      console.log("GetAttendanceDataAction function error");
+      toast.error("Somthing Went Wrong");
+      setIsLoading(false);
+    }
+  };
   return (
     <Card className="text-center shadow-sm border-0 rounded p-0">
       <OverlayTrigger
         placement="bottom"
         overlay={
           <Tooltip id="tooltip">
-           
-                {absentUsers.length > 0
-                  ? absentUserIds && absentUsers.join(", ")
-                  : "No absent users"}
-             
+            {absentUsers.length > 0
+              ? absentUserIds && absentUsers.join(", ")
+              : "No absent users"}
           </Tooltip>
         }
       >
@@ -97,7 +119,15 @@ function TodayAbsent() {
           <div className="d-flex flex-column align-items-center">
             <FaUserTimes size={50} color="#f43f5e" />
             <h3 className="mt-2" style={{ color: "#f43f5e", fontSize: "2rem" }}>
-              {absentCount}
+              {isLoading ? (
+                <span
+                  className="spinner-border spinner-border-sm"
+                  role="status"
+                  aria-hidden="true"
+                ></span>
+              ) : (
+                absentCount
+              )}
             </h3>
           </div>
         </Card.Body>

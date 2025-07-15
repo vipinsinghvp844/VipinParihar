@@ -35,7 +35,7 @@ export const LoginUserAction = (obj12) => async (dispatch) => {
         localStorage.setItem("password", obj12.password);
         localStorage.setItem("authtoken", user.token);
         localStorage.setItem("user_email", user.user.email);
-        localStorage.setItem("user_name", user.user.name);
+        localStorage.setItem("user_name", user.user.username);
         localStorage.setItem("role", user.user.role);
         localStorage.setItem("user", JSON.stringify(user));
         localStorage.setItem("user_id", user.user.id);
@@ -63,11 +63,10 @@ export const FetchUserProfileAction = (body) => async (dispatch) => {
         },
       }
     );
-    // console.log(profileResponse.data, "============================jsut check");
 
     if (profileResponse.status == 200) {
       dispatch(
-        UserProfilePicReduser(profileResponse.data.profile.profile_image)
+        UserProfilePicReduser(profileResponse?.data?.profile?.profile_image)
       );
       return profileResponse;
     }
@@ -79,7 +78,6 @@ export const FetchUserProfileAction = (body) => async (dispatch) => {
 export const FetchAllUserProfileAction = () => async (dispatch) => {
   try {
     const token = localStorage.getItem("authtoken");
-    // const profileResponse = await axios.get(`${import.meta.env.VITE_API_PROFILE_GET_ALL}`, {
     const profileResponse = await axios.get(
       `${import.meta.env.VITE_API_PROFILE_GET_ALL}`,
       {
@@ -89,10 +87,9 @@ export const FetchAllUserProfileAction = () => async (dispatch) => {
       }
     );
 
-    // console.log(profileResponse, "Full API response"); // Log the response
     if (profileResponse.status == 200) {
-      dispatch(AlluserProfileGetReduser(profileResponse.data)); // Send full response, not just [0]
-      return profileResponse;
+      dispatch(AlluserProfileGetReduser(profileResponse.data)); 
+      return profileResponse.data;
     }
   } catch (error) {
     console.error("Error fetching user profile:", error);

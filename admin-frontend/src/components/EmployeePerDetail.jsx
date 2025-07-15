@@ -4,57 +4,27 @@ import {
   Card,
   Button,
   Alert,
-  Col,
   Row,
+  Col,
   Modal,
   Form,
   Spinner,
 } from "react-bootstrap";
 import axios from "axios";
-import { useParams } from "react-router-dom"; // Assuming you're using React Router for navigation
-import { useDispatch, useSelector } from "react-redux";
+import { useParams } from "react-router-dom";
 
 const EmployeePerDetail = () => {
-  const { id } = useParams(); // Get employee ID from URL parameters
-  const [employeeDetails, setEmployeeDetails] = useState(null);
-  const [basicInfo, setBasicInfo] = useState(null);
+  const { id } = useParams();
+  const [employee, setEmployee] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showModal, setShowModal] = useState(false);
-  const [currentEditData, setCurrentEditData] = useState({});
+  const [editData, setEditData] = useState({});
   const [modalTitle, setModalTitle] = useState("");
-  const [modalType, setModalType] = useState(""); // To determine which type of data is being edited
-  const dispatch = useDispatch();
-  const {
-    TotalUsers,
-    TotalAttendance,
-    TotalEmployeeInLeave,
-    GetEmployeeInfoAll,
-  } = useSelector(({ EmployeeDetailReducers }) => EmployeeDetailReducers);
-  // console.log(GetEmployeeInfoAll, "GetEmployeeInfoAll=====================");
 
+  // Fetch employee data
   useEffect(() => {
-    const fetchEmployeeDetails = async () => {
-      try {
-        const response = await axios.get(
-          `${import.meta.env.VITE_API_PERSONAL_INFO}/${id}`
-        );
-   
-        setEmployeeDetails(response.data);
-        // console.log("Employee Details:", response.data);
-      } catch (error) {
-        setError("Error fetching employee details.");
-        console.error("Error fetching employee details:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchEmployeeDetails();
-  }, [id]);
-
-  useEffect(() => {
-    const fetchBasicDetails = async () => {
+    const fetchData = async () => {
       try {
         const response = await axios.get(
           `http://localhost:5000/api/auth/get-user-by-id/${id}`,
@@ -64,622 +34,299 @@ const EmployeePerDetail = () => {
             },
           }
         );
-        setBasicInfo(response.data.data);
-        // console.log("Basic Info:", response.data);
-      } catch (error) {
-        setError("Error fetching basic info.");
-        console.error("Error fetching basic info:", error);
+        setEmployee(response.data.data);
+      } catch (err) {
+        setError("Failed to load employee data");
       } finally {
         setLoading(false);
       }
     };
-
-    fetchBasicDetails();
+    fetchData();
   }, [id]);
 
-  const handleEdit = (data, title, type) => {
-    setCurrentEditData(data);
-    setModalTitle(title);
-    setModalType(type);
+  // Handle edit button click
+  const handleEdit = (section) => {
+    setEditData(employee);
+    setModalTitle(`Edit ${section}`);
     setShowModal(true);
   };
 
+  // Save changes
   const handleSave = async () => {
     try {
-      if (modalType === "Basic Info") {
-        await axios.put(
-          `http://localhost:5000/api/auth/updateuser/${id}`,
-          currentEditData,
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("authtoken")}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
-        console.log(currentEditData,"========");
-        
-      } else if (
-        (modalType === "Personal Information", "Bank Details", "Other Details")
-      ) {
-  
-        await axios.put(
-          `${import.meta.env.VITE_API_PERSONAL_INFO}/${id}`,
-          currentEditData
-        );
-      }
-
+      await axios.put(
+        `http://localhost:5000/api/auth/updateuser/${id}`,
+        editData,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("authtoken")}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      // Refresh data after update
+      const response = await axios.get(
+        `http://localhost:5000/api/auth/get-user-by-id/${id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("authtoken")}`,
+          },
+        }
+      );
+      setEmployee(response.data.data);
       setShowModal(false);
-    } catch (error) {
-      console.error("Error saving data:", error);
-      setError("Error saving data.");
+    } catch (err) {
+      setError("Failed to save changes");
     }
   };
 
+  // Update edit data when form fields change
+  const handleChange = (e, path) => {
+    const value = e.target.value;
+    const keys = path.split(".");
+
+    setEditData((prev) => {
+      const newData = { ...prev };
+      let current = newData;
+
+      for (let i = 0; i < keys.length - 1; i++) {
+        if (!current[keys[i]]) current[keys[i]] = {};
+        current = current[keys[i]];
+      }
+
+      current[keys[keys.length - 1]] = value;
+      return newData;
+    });
+  };
+
+  if (loading) return <Spinner animation="border" className="m-5" />;
+  if (error)
+    return (
+      <Alert variant="danger" className="m-5">
+        {error}
+      </Alert>
+    );
+  if (!employee)
+    return (
+      <Alert variant="warning" className="m-5">
+        Employee not found
+      </Alert>
+    );
 
   return (
-    <Container className="p-5">
-      <Row className="mb-4">
-        <Col md={1}>
-          <i
-            className="bi bi-arrow-left-circle"
-            onClick={() => window.history.back()}
-            style={{
-              cursor: "pointer",
-              fontSize: "32px",
-              color: "#343a40",
-            }}
-          ></i>
-        </Col>
-        <Col md={10}>
-          <h3 className="mt-2">Employee Details</h3>
-        </Col>
-      </Row>
-      <Row className="mb-5">
-        <Col>
-          <Card>
-            <Card.Body>
-              <div className="d-flex justify-content-between">
-                <Card.Title>Basic Info</Card.Title>
-                <Button
-                  variant="outline-primary"
-                  size="sm"
-                  onClick={() =>
-                    handleEdit(basicInfo, "Edit Basic Info", "Basic Info")
-                  }
-                >
-                  Edit
-                </Button>
-              </div>
-              {basicInfo ? (
-                <>
-                  <Card.Text>
-                    <strong>First Name:</strong> {basicInfo.firstname}
-                  </Card.Text>
-                  <Card.Text>
-                    <strong>Last Name:</strong> {basicInfo.lastname}
-                  </Card.Text>
-                  <Card.Text>
-                    <strong>Employee Username:</strong> {basicInfo.username}
-                  </Card.Text>
-                  <Card.Text>
-                    <strong>Employee Email:</strong> {basicInfo.email}
-                  </Card.Text>
-                  <Card.Text>
-                    <strong>Employee Mobile:</strong> {basicInfo.mobile}
-                  </Card.Text>
-                  <Card.Text>
-                    <strong>Employee Address:</strong> {basicInfo.address}
-                  </Card.Text>
-                  <Card.Text>
-                    <strong>Employee DOB:</strong> {basicInfo.dob}
-                  </Card.Text>
-                </>
-              ) : (
-                <div style={{ textAlign: "center" }}>
-                  <Spinner />
-                </div>
-              )}
-            </Card.Body>
-          </Card>
+    <Container className="p-4">
+      {/* Header with back button */}
+      <Row className="mb-4 align-items-center">
+        <Col xs="auto">
+          <Button variant="light" onClick={() => window.history.back()}>
+            <i className="bi bi-arrow-left"></i> Back
+          </Button>
         </Col>
         <Col>
-          <Card>
-            <Card.Body>
-              <div className="d-flex justify-content-between">
-                <Card.Title>Personal Information</Card.Title>
-                <Button
-                  variant="outline-primary"
-                  size="sm"
-                  onClick={() =>
-                    handleEdit(
-                      employeeDetails,
-                      "Edit Personal Information",
-                      "Personal Information"
-                    )
-                  }
-                >
-                  Edit
-                </Button>
-              </div>
-              {employeeDetails ? (
-                <>
-                  <Card.Text>
-                    <strong>Position:</strong> {employeeDetails.position}
-                  </Card.Text>
-                  <Card.Text>
-                    <strong>Department:</strong> {employeeDetails.department}
-                  </Card.Text>
-                  <Card.Text>
-                    <strong>Duty Type:</strong> {employeeDetails.duty_type}
-                  </Card.Text>
-                  <Card.Text>
-                    <strong>Date of Joining:</strong>{" "}
-                    {employeeDetails.date_of_joining}
-                  </Card.Text>
-                  <Card.Text>
-                    <strong>Salary:</strong> {employeeDetails.basic_salary}
-                  </Card.Text>
-                  <Card.Text>
-                    <strong>Date of Leaving:</strong>{" "}
-                    {employeeDetails.date_of_leaving}
-                  </Card.Text>
-                </>
-              ) : (
-                <div style={{ textAlign: "center" }}>
-                  <Spinner />
-                </div>
-              )}
-            </Card.Body>
-          </Card>
-        </Col>
-      </Row>
-      <Row>
-        <Col>
-          <Card>
-            <Card.Body>
-              <div className="d-flex justify-content-between">
-                <Card.Title>Bank Details</Card.Title>
-                <Button
-                  variant="outline-primary"
-                  size="sm"
-                  onClick={() =>
-                    handleEdit(
-                      employeeDetails,
-                      "Edit Bank Details",
-                      "Bank Details"
-                    )
-                  }
-                >
-                  Edit
-                </Button>
-              </div>
-              {employeeDetails ? (
-                <>
-                  <Card.Text>
-                    <strong>Bank Name:</strong> {employeeDetails.name_of_bank}
-                  </Card.Text>
-                  <Card.Text>
-                    <strong>Name in Bank:</strong>{" "}
-                    {employeeDetails.name_in_bank}
-                  </Card.Text>
-                  <Card.Text>
-                    <strong>Account Number:</strong>{" "}
-                    {employeeDetails.account_number}
-                  </Card.Text>
-                  <Card.Text>
-                    <strong>Branch:</strong> {employeeDetails.branch}
-                  </Card.Text>
-                  <Card.Text>
-                    <strong>IFSC Code:</strong> {employeeDetails.ifsc_code}
-                  </Card.Text>
-                </>
-              ) : (
-                <div style={{ textAlign: "center" }}>
-                  <Spinner />
-                </div>
-              )}
-            </Card.Body>
-          </Card>
-        </Col>
-        <Col>
-          <Card>
-            <Card.Body>
-              <div className="d-flex justify-content-between">
-                <Card.Title>Others</Card.Title>
-                <Button
-                  variant="outline-primary"
-                  size="sm"
-                  onClick={() =>
-                    handleEdit(
-                      employeeDetails,
-                      "Edit Other Details",
-                      "Other Details"
-                    )
-                  }
-                >
-                  Edit
-                </Button>
-              </div>
-              {employeeDetails ? (
-                <>
-                  <Card.Text>
-                    <strong>Employment Type:</strong>{" "}
-                    {employeeDetails.employment_type}
-                  </Card.Text>
-                  <Card.Text>
-                    <strong>Graduation Subject:</strong>{" "}
-                    {employeeDetails.graduation_subject}
-                  </Card.Text>
-                  <Card.Text>
-                    <strong>Graduation Year:</strong>{" "}
-                    {employeeDetails.graduation_year}
-                  </Card.Text>
-                  <Card.Text>
-                    <strong>Previous Employer Name:</strong>{" "}
-                    {employeeDetails.previous_employer_name}
-                  </Card.Text>
-                  <Card.Text>
-                    <strong>Professional Course Subject:</strong>{" "}
-                    {employeeDetails.professional_course_subject}
-                  </Card.Text>
-                  <Card.Text>
-                    <strong>Professional Course Year:</strong>{" "}
-                    {employeeDetails.professional_course_year}
-                  </Card.Text>
-                </>
-              ) : (
-                <div style={{ textAlign: "center" }}>
-                  <Spinner />
-                </div>
-              )}
-            </Card.Body>
-          </Card>
+          <h2>Employee Details</h2>
         </Col>
       </Row>
 
-      <Modal show={showModal} onHide={() => setShowModal(false)}>
+      {/* Basic Info Section */}
+      <Card className="mb-4">
+        <Card.Header className="d-flex justify-content-between align-items-center">
+          <h5>Basic Information</h5>
+          <Button size="sm" onClick={() => handleEdit("Basic Info")}>
+            Edit
+          </Button>
+        </Card.Header>
+        <Card.Body>
+          <DetailRow
+            label="First Name"
+            value={employee.personalInfo?.firstname}
+          />
+          <DetailRow
+            label="Last Name"
+            value={employee.personalInfo?.lastname}
+          />
+          <DetailRow label="Username" value={employee.username} />
+          <DetailRow label="Email" value={employee.email} />
+          <DetailRow label="Mobile" value={employee.personalInfo?.mobile} />
+          <DetailRow
+            label="Address"
+            value={employee.additionalInfoDetail?.address}
+          />
+          <DetailRow label="Date of Birth" value={employee.personalInfo?.dob} />
+        </Card.Body>
+      </Card>
+
+      {/* Employment Info Section */}
+      <Card className="mb-4">
+        <Card.Header className="d-flex justify-content-between align-items-center">
+          <h5>Employment Information</h5>
+          <Button size="sm" onClick={() => handleEdit("Employment Info")}>
+            Edit
+          </Button>
+        </Card.Header>
+        <Card.Body>
+          <DetailRow
+            label="Designation"
+            value={employee.employmentInfo?.designation}
+          />
+          <DetailRow
+            label="Department"
+            value={employee.employmentInfo?.department}
+          />
+          <DetailRow
+            label="Employment Type"
+            value={employee.employmentInfo?.emloyeementType}
+          />
+          <DetailRow
+            label="Date of Joining"
+            value={employee.employmentInfo?.dateOfJoining}
+          />
+          <DetailRow label="Salary" value={employee.employmentInfo?.salary} />
+        </Card.Body>
+      </Card>
+
+      {/* Bank Details Section */}
+      <Card className="mb-4">
+        <Card.Header className="d-flex justify-content-between align-items-center">
+          <h5>Bank Details</h5>
+          <Button size="sm" onClick={() => handleEdit("Bank Details")}>
+            Edit
+          </Button>
+        </Card.Header>
+        <Card.Body>
+          <DetailRow label="Bank Name" value={employee.bankDetails?.bankName} />
+          <DetailRow
+            label="Account Number"
+            value={employee.bankDetails?.accountNumber}
+          />
+          <DetailRow label="Branch" value={employee.bankDetails?.bankBranch} />
+          <DetailRow label="IFSC Code" value={employee.bankDetails?.IFSC} />
+        </Card.Body>
+      </Card>
+
+      <Card className="mb-4">
+        <Card.Header className="d-flex justify-content-between align-items-center">
+          <h5>Additional Information</h5>
+          <Button size="sm" onClick={() => handleEdit("Additional Info")}>
+            Edit
+          </Button>
+        </Card.Header>
+        <Card.Body>
+          <DetailRow
+            label="Graduation Year"
+            value={employee.additionalInfoDetail?.graduationYear}
+          />
+          <DetailRow
+            label="Previous Employer"
+            value={employee.additionalInfoDetail?.previousEmpName}
+          />
+          <DetailRow
+            label="Date of Leaving"
+            value={employee.additionalInfoDetail?.dateOfLeaving}
+          />
+        </Card.Body>
+      </Card>
+
+      {/* Edit Modal */}
+      <Modal show={showModal} onHide={() => setShowModal(false)} size="lg">
         <Modal.Header closeButton>
           <Modal.Title>{modalTitle}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <Form>
-            {modalType === "Basic Info" && basicInfo && (
+            {modalTitle === "Edit Basic Info" && (
               <>
-                <Form.Group controlId="first_name">
-                  <Form.Label>First Name</Form.Label>
-                  <Form.Control
-                    type="text"
-                    value={currentEditData.firstname || ""}
-                    onChange={(e) =>
-                      setCurrentEditData({
-                        ...currentEditData,
-                        firstname: e.target.value,
-                      })
-                    }
-                  />
-                </Form.Group>
-                <Form.Group controlId="last_name">
-                  <Form.Label>Last Name</Form.Label>
-                  <Form.Control
-                    type="text"
-                    value={currentEditData.lastname || ""}
-                    onChange={(e) =>
-                      setCurrentEditData({
-                        ...currentEditData,
-                        lastname: e.target.value,
-                      })
-                    }
-                  />
-                </Form.Group>
-                <Form.Group controlId="username">
-                  <Form.Label>Employee Username</Form.Label>
-                  <Form.Control
-                    type="text"
-                    value={currentEditData.username || ""}
-                    onChange={(e) =>
-                      setCurrentEditData({
-                        ...currentEditData,
-                        username: e.target.value,
-                      })
-                    }
-                  />
-                </Form.Group>
-                <Form.Group controlId="email">
-                  <Form.Label>Employee Email</Form.Label>
-                  <Form.Control
-                    type="email"
-                    value={currentEditData.email || ""}
-                    onChange={(e) =>
-                      setCurrentEditData({
-                        ...currentEditData,
-                        email: e.target.value,
-                      })
-                    }
-                  />
-                </Form.Group>
-                <Form.Group controlId="mobile">
-                  <Form.Label>Employee Mobile</Form.Label>
-                  <Form.Control
-                    type="text"
-                    value={currentEditData.mobile || ""}
-                    onChange={(e) =>
-                      setCurrentEditData({
-                        ...currentEditData,
-                        mobile: e.target.value,
-                      })
-                    }
-                  />
-                </Form.Group>
-                <Form.Group controlId="address">
-                  <Form.Label>Employee Address</Form.Label>
-                  <Form.Control
-                    type="text"
-                    value={currentEditData.address || ""}
-                    onChange={(e) =>
-                      setCurrentEditData({
-                        ...currentEditData,
-                        address: e.target.value,
-                      })
-                    }
-                  />
-                </Form.Group>
-                <Form.Group controlId="dob">
-                  <Form.Label>Employee DOB</Form.Label>
-                  <Form.Control
-                    type="date"
-                    value={currentEditData.dob || ""}
-                    onChange={(e) =>
-                      setCurrentEditData({
-                        ...currentEditData,
-                        dob: e.target.value,
-                      })
-                    }
-                  />
-                </Form.Group>
+                <FormField
+                  label="First Name"
+                  value={editData.personalInfo?.firstname || ""}
+                  onChange={(e) => handleChange(e, "personalInfo.firstname")}
+                />
+                <FormField
+                  label="Last Name"
+                  value={editData.personalInfo?.lastname || ""}
+                  onChange={(e) => handleChange(e, "personalInfo.lastname")}
+                />
+                <FormField
+                  label="Username"
+                  value={editData.username || ""}
+                  onChange={(e) => handleChange(e, "username")}
+                />
+                <FormField
+                  label="Email"
+                  type="email"
+                  value={editData.email || ""}
+                  onChange={(e) => handleChange(e, "email")}
+                />
               </>
             )}
-            {modalType === "Personal Information" && employeeDetails && (
+
+            {modalTitle === "Edit Employment Info" && (
               <>
-                <Form.Group controlId="position">
-                  <Form.Label>Position</Form.Label>
-                  <Form.Control
-                    type="text"
-                    value={currentEditData.position || ""}
-                    onChange={(e) =>
-                      setCurrentEditData({
-                        ...currentEditData,
-                        position: e.target.value,
-                      })
-                    }
-                  />
-                </Form.Group>
-                <Form.Group controlId="department">
-                  <Form.Label>Department</Form.Label>
-                  <Form.Control
-                    type="text"
-                    value={currentEditData.department || ""}
-                    onChange={(e) =>
-                      setCurrentEditData({
-                        ...currentEditData,
-                        department: e.target.value,
-                      })
-                    }
-                  />
-                </Form.Group>
-                <Form.Group controlId="duty_type">
-                  <Form.Label>Duty Type</Form.Label>
-                  <Form.Control
-                    type="text"
-                    value={currentEditData.duty_type || ""}
-                    onChange={(e) =>
-                      setCurrentEditData({
-                        ...currentEditData,
-                        duty_type: e.target.value,
-                      })
-                    }
-                  />
-                </Form.Group>
-                <Form.Group controlId="date_of_joining">
-                  <Form.Label>Date of Joining</Form.Label>
-                  <Form.Control
-                    type="date"
-                    value={currentEditData.date_of_joining || ""}
-                    onChange={(e) =>
-                      setCurrentEditData({
-                        ...currentEditData,
-                        date_of_joining: e.target.value,
-                      })
-                    }
-                  />
-                </Form.Group>
-                <Form.Group controlId="basic_salary">
-                  <Form.Label>Salary</Form.Label>
-                  <Form.Control
-                    type="number"
-                    value={currentEditData.basic_salary || ""}
-                    onChange={(e) =>
-                      setCurrentEditData({
-                        ...currentEditData,
-                        basic_salary: e.target.value,
-                      })
-                    }
-                  />
-                </Form.Group>
-                <Form.Group controlId="status">
-                </Form.Group>
-                <Form.Group controlId="date_of_leaving">
-                  <Form.Label>Date of Leaving</Form.Label>
-                  <Form.Control
-                    type="date"
-                    value={currentEditData.date_of_leaving || ""}
-                    onChange={(e) => {
-                      const newDateOfLeaving = e.target.value;
-                      setCurrentEditData({
-                        ...currentEditData,
-                        date_of_leaving: newDateOfLeaving,
-                      });
-                    }}
-                  />
-                </Form.Group>
+                <FormField
+                  label="Designation"
+                  value={editData.employmentInfo?.designation || ""}
+                  onChange={(e) =>
+                    handleChange(e, "employmentInfo.designation")
+                  }
+                />
+                <FormField
+                  label="Department"
+                  value={editData.employmentInfo?.department || ""}
+                  onChange={(e) => handleChange(e, "employmentInfo.department")}
+                />
+                <FormField
+                  label="Salary"
+                  type="number"
+                  value={editData.employmentInfo?.salary || ""}
+                  onChange={(e) => handleChange(e, "employmentInfo.salary")}
+                />
               </>
             )}
-            {modalType === "Bank Details" && employeeDetails && (
+
+            {modalTitle === "Edit Bank Details" && (
               <>
-                <Form.Group controlId="name_of_bank">
-                  <Form.Label>Bank Name</Form.Label>
-                  <Form.Control
-                    type="text"
-                    value={currentEditData.name_of_bank || ""}
-                    onChange={(e) =>
-                      setCurrentEditData({
-                        ...currentEditData,
-                        name_of_bank: e.target.value,
-                      })
-                    }
-                  />
-                </Form.Group>
-                <Form.Group controlId="name_in_bank">
-                  <Form.Label>Name in Bank</Form.Label>
-                  <Form.Control
-                    type="text"
-                    value={currentEditData.name_in_bank || ""}
-                    onChange={(e) =>
-                      setCurrentEditData({
-                        ...currentEditData,
-                        name_in_bank: e.target.value,
-                      })
-                    }
-                  />
-                </Form.Group>
-                <Form.Group controlId="account_number">
-                  <Form.Label>Account Number</Form.Label>
-                  <Form.Control
-                    type="text"
-                    value={currentEditData.account_number || ""}
-                    onChange={(e) =>
-                      setCurrentEditData({
-                        ...currentEditData,
-                        account_number: e.target.value,
-                      })
-                    }
-                  />
-                </Form.Group>
-                <Form.Group controlId="branch">
-                  <Form.Label>Branch</Form.Label>
-                  <Form.Control
-                    type="text"
-                    value={currentEditData.branch || ""}
-                    onChange={(e) =>
-                      setCurrentEditData({
-                        ...currentEditData,
-                        branch: e.target.value,
-                      })
-                    }
-                  />
-                </Form.Group>
-                <Form.Group controlId="ifsc_code">
-                  <Form.Label>IFSC Code</Form.Label>
-                  <Form.Control
-                    type="text"
-                    value={currentEditData.ifsc_code || ""}
-                    onChange={(e) =>
-                      setCurrentEditData({
-                        ...currentEditData,
-                        ifsc_code: e.target.value,
-                      })
-                    }
-                  />
-                </Form.Group>
+                <FormField
+                  label="Bank Name"
+                  value={editData.bankDetails?.bankName || ""}
+                  onChange={(e) => handleChange(e, "bankDetails.bankName")}
+                />
+                <FormField
+                  label="Account Number"
+                  value={editData.bankDetails?.accountNumber || ""}
+                  onChange={(e) => handleChange(e, "bankDetails.accountNumber")}
+                />
               </>
             )}
-            {modalType === "Other Details" && employeeDetails && (
+
+            {modalTitle === "Edit Additional Info" && (
               <>
-                <Form.Group controlId="employment_type">
-                  <Form.Label>Employment Type</Form.Label>
-                  <Form.Control
-                    type="text"
-                    value={currentEditData.employment_type || ""}
-                    onChange={(e) =>
-                      setCurrentEditData({
-                        ...currentEditData,
-                        employment_type: e.target.value,
-                      })
-                    }
-                  />
-                </Form.Group>
-                <Form.Group controlId="graduation_subject">
-                  <Form.Label>Graduation Subject</Form.Label>
-                  <Form.Control
-                    type="text"
-                    value={currentEditData.graduation_subject || ""}
-                    onChange={(e) =>
-                      setCurrentEditData({
-                        ...currentEditData,
-                        graduation_subject: e.target.value,
-                      })
-                    }
-                  />
-                </Form.Group>
-                <Form.Group controlId="graduation_year">
-                  <Form.Label>Graduation Year</Form.Label>
-                  <Form.Control
-                    type="text"
-                    value={currentEditData.graduation_year || ""}
-                    onChange={(e) =>
-                      setCurrentEditData({
-                        ...currentEditData,
-                        graduation_year: e.target.value,
-                      })
-                    }
-                  />
-                </Form.Group>
-                <Form.Group controlId="previous_employer_name">
-                  <Form.Label>Previous Employer Name</Form.Label>
-                  <Form.Control
-                    type="text"
-                    value={currentEditData.previous_employer_name || ""}
-                    onChange={(e) =>
-                      setCurrentEditData({
-                        ...currentEditData,
-                        previous_employer_name: e.target.value,
-                      })
-                    }
-                  />
-                </Form.Group>
-                <Form.Group controlId="professional_course_subject">
-                  <Form.Label>Professional Course Subject</Form.Label>
-                  <Form.Control
-                    type="text"
-                    value={currentEditData.professional_course_subject || ""}
-                    onChange={(e) =>
-                      setCurrentEditData({
-                        ...currentEditData,
-                        professional_course_subject: e.target.value,
-                      })
-                    }
-                  />
-                </Form.Group>
-                <Form.Group controlId="professional_course_year">
-                  <Form.Label>Professional Course Year</Form.Label>
-                  <Form.Control
-                    type="text"
-                    value={currentEditData.professional_course_year || ""}
-                    onChange={(e) =>
-                      setCurrentEditData({
-                        ...currentEditData,
-                        professional_course_year: e.target.value,
-                      })
-                    }
-                  />
-                </Form.Group>
+                <FormField
+                  label="Graduation Year"
+                  value={editData.additionalInfoDetail?.graduationYear || ""}
+                  onChange={(e) =>
+                    handleChange(e, "additionalInfoDetail.graduationYear")
+                  }
+                />
+                <FormField
+                  label="Previous Employer"
+                  value={editData.additionalInfoDetail?.previousEmpName || ""}
+                  onChange={(e) =>
+                    handleChange(e, "additionalInfoDetail.previousEmpName")
+                  }
+                />
+                <FormField
+                  label="Date of Leaving"
+                  value={editData.additionalInfoDetail?.dateOfLeaving || ""}
+                  onChange={(e) =>
+                    handleChange(e, "additionalInfoDetail.dateOfLeaving")
+                  }
+                />
               </>
             )}
           </Form>
         </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={() => setShowModal(false)}>
-            Close
+            Cancel
           </Button>
           <Button variant="primary" onClick={handleSave}>
             Save Changes
@@ -689,5 +336,20 @@ const EmployeePerDetail = () => {
     </Container>
   );
 };
+
+// Helper component for displaying detail rows
+const DetailRow = ({ label, value }) => (
+  <p>
+    <strong>{label}:</strong> {value || "-"}
+  </p>
+);
+
+// Helper component for form fields
+const FormField = ({ label, type = "text", value, onChange }) => (
+  <Form.Group className="mb-3">
+    <Form.Label>{label}</Form.Label>
+    <Form.Control type={type} value={value} onChange={onChange} />
+  </Form.Group>
+);
 
 export default EmployeePerDetail;

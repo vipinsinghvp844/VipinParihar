@@ -8,21 +8,29 @@ const Sidebar = ({ userRole, pendingCount }) => {
   const [userStatus, setUserStatus] = useState("active");
   const [show, setShow] = useState(false);
   const userId = localStorage.getItem("user_id");
+  const currentDate = new Date().toISOString().split("T")[0];
+  const [pendCount, setPendCount] = useState(0);
 
-  // useEffect(() => {
-  //   const fetchUserStatus = async () => {
-  //     try {
-  //       const response = await axios.get(
-  //         `${import.meta.env.VITE_API_CUSTOM_USERS}/${userId}`
-  //       );
-  //       setUserStatus(response.data.user_state);
-  //     } catch (error) {
-  //       console.error("Error fetching user status:", error);
-  //     }
-  //   };
 
-  //   fetchUserStatus();
-  // }, [userId]);
+  useEffect(() => {
+    fetchLeaveRequestUserCount();
+  },[])
+
+  const fetchLeaveRequestUserCount = async () => {
+    try {
+     const response = await axios.get(
+       `http://localhost:5000/api/leave/leave-count-user/${currentDate}`,
+       {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("authtoken")}`,
+        },
+      }
+      );
+      setPendCount(response.data.totalpendingleave);
+    } catch ( error ) {
+      console.error("faild to fetch leaved user count")
+   }
+ }
 
   const toggleMenu = () => {
     if (window.innerWidth < 992) {
@@ -53,17 +61,13 @@ const Sidebar = ({ userRole, pendingCount }) => {
         label: "Manage Attendance",
       },
       { to: "/all-employee", icon: "bi-people", label: "All Employee" },
-      {
-        to: "/add-employee-details",
-        icon: "bi-file-earmark-spreadsheet",
-        label: "Add Employee Details",
-      },
       { to: "/add-employee", icon: "bi-person-add", label: "Add User" },
       {
         to: "/leave-requests",
         icon: "bi-person-exclamation",
         label: "Leave Requests",
-        badge: pendingCount,
+        // badge: pendingCount,
+        badge: pendCount,
       },
       {
         to: "/leave-policies",
@@ -102,11 +106,6 @@ const Sidebar = ({ userRole, pendingCount }) => {
               icon: "bi-kanban",
               label: "Manage Attendance",
             },
-            {
-              to: "/add-employee-details",
-              icon: "bi-file-earmark-spreadsheet",
-              label: "Add Employee Details",
-            },
             { to: "/all-employee", icon: "bi-people", label: "All Employee" },
             {
               to: "/manage-holidays",
@@ -122,7 +121,8 @@ const Sidebar = ({ userRole, pendingCount }) => {
               to: "/leave-requests",
               icon: "bi-person-exclamation",
               label: "Leave Requests",
-              badge: pendingCount,
+              // badge: pendingCount,
+              badge: pendCount,
             },
             {
               to: "/leave-policies",

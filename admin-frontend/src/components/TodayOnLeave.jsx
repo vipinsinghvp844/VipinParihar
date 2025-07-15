@@ -7,51 +7,30 @@ function TodayOnLeave() {
   const [onLeaveCount, setOnLeaveCount] = useState(0);
   const [leaveUserNames, setLeaveUserNames] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const currentDate = new Date().toISOString().split("T")[0]; // Format to YYYY-MM-DD
+  const currentDate = new Date().toISOString().split("T")[0];
+  
 
   useEffect(() => {
     fetchOnLeaveCount();
   }, []);
 
   const fetchOnLeaveCount = async () => {
+    setLoading(true);
     try {
       const leaveResponse = await axios.get(
-        `${import.meta.env.VITE_API_LEAVE}`, {
+        `http://localhost:5000/api/leave/leave-count-user/${currentDate}`,
+        {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("authtoken")}`,
           },
         }
       );
       const leaveData = leaveResponse.data || [];
-      // console.log(leaveData)
-      // const absentUserIds = nonAdminUserIds.filter(
-      //   (userId) => !presentOrOnLeaveUserIds.has(userId)
-      // );
-
-      // const absentUserNames = nonAdminUsers
-      //   .filter((user) => absentUserIds.includes(user.id.toString()))
-      //   .map((user) => user.username);
-      // Filter leaves that are accepted and active for the current date
-      const onLeaveUsers = leaveData.filter((leave) => {
-        const startDate = new Date(leave.start_date)
-          .toISOString()
-          .split("T")[0];
-        const endDate = new Date(leave.end_date).toISOString().split("T")[0];
-        return (
-          leave.status === "Accept" &&
-          startDate <= currentDate &&
-          endDate >= currentDate
-        );
-      });
-
-      setOnLeaveCount(onLeaveUsers.length);
-      setLeaveUserNames(onLeaveUsers.map((user) => user.user_name));
-
+      setOnLeaveCount(leaveData.totalLeavedUsers);
+      setLeaveUserNames(leaveData.users);
       setLoading(false);
     } catch (error) {
       console.error("Error fetching leave data:", error);
-      setError("Error fetching leave data. Please try again later.");
       setLoading(false);
     }
   };
@@ -62,9 +41,9 @@ function TodayOnLeave() {
         placement="bottom"
         overlay={
           <Tooltip id="tooltip">
-                {leaveUserNames.length > 0
-                  ? leaveUserNames.join(", ")
-                  : "No Leaves users"}
+            {leaveUserNames.length > 0
+              ? leaveUserNames.join(", ")
+              : "No Leaves users"}
           </Tooltip>
         }
       >
@@ -73,7 +52,15 @@ function TodayOnLeave() {
           <div className="d-flex flex-column align-items-center">
             <FaUserTimes size={50} color="#a855f7" />
             <h3 className="mt-2" style={{ color: "#a855f7", fontSize: "2rem" }}>
-              {onLeaveCount}
+              {loading ? (
+                <span
+                  className="spinner-border spinner-border-sm"
+                  role="status"
+                  aria-hidden="true"
+                ></span>
+              ) : (
+                onLeaveCount
+              )}
             </h3>
           </div>
         </Card.Body>

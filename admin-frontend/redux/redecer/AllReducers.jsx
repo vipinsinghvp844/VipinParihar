@@ -36,9 +36,6 @@ const AllReducers = createSlice({
     },
     AlluserProfileGetReduser: (state, { payload }) => { 
       state.AllProfilesImage = payload;
-      // console.log(state.AllProfilesImage, "Updated state");
-
-      
     },
   },
 });

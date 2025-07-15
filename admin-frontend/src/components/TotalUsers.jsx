@@ -13,9 +13,11 @@ const TotalUsers = ({ setBirthdayMessages }) => {
   const { TotalUsers } = useSelector(
     ({ EmployeeDetailReducers }) => EmployeeDetailReducers
   );
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const fetchUsersCount = async () => {
+      setIsLoading(true);
       try {
         const userCount = await axios.get(`http://localhost:5000/api/auth/user-count`, {
           headers: {
@@ -23,6 +25,7 @@ const TotalUsers = ({ setBirthdayMessages }) => {
           },
         });
         setTotalUsers(userCount.data.total);
+        setIsLoading(false);
       } catch (err) {
         console.log(err, "Failed to fetch user count");
       }
@@ -37,7 +40,15 @@ const TotalUsers = ({ setBirthdayMessages }) => {
         <div className="d-flex flex-column align-items-center">
           <FaUsers size={50} color="#10b981" />
           <h3 className="mt-2" style={{ color: "#10b981", fontSize: "2rem" }}>
-            {totalUsers}
+            {isLoading ? (
+              <span
+                className="spinner-border spinner-border-sm"
+                role="status"
+                aria-hidden="true"
+              ></span>
+            ) : (
+              totalUsers
+            )}
           </h3>
         </div>
       </Card.Body>

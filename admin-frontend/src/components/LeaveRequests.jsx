@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-// import "../App.css";
 import {
   Button,
   Table,
@@ -11,13 +10,16 @@ import {
   Collapse,
 } from "react-bootstrap";
 import axios from "axios";
-import { useDispatch, useSelector } from "react-redux";
-import { GetEmployeeLeaveDetailAction } from "../../redux/actions/EmployeeDetailsAction";
-import LoaderSpiner from "./LoaderSpiner";
 import { toast } from "react-toastify";
 import { Link, useLocation } from "react-router-dom";
+import LoaderSpiner from "./LoaderSpiner";
+import Pagination from "@mui/material/Pagination";
+import Stack from "@mui/material/Stack";
 
-const LeaveRequests = ({ setPendingCount }) => {
+const LeaveRequests = () => {
+  const [page, setPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [apiLimit, setApiLimit] = useState(10);
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
   const senderId = queryParams.get("sender_id");
@@ -27,232 +29,124 @@ const LeaveRequests = ({ setPendingCount }) => {
   const [note, setNote] = useState("");
   const [modalType, setModalType] = useState("");
   const [loading, setLoading] = useState(true);
-  const currentDate = new Date().toISOString().split("T")[0];
-  const { TotalEmployeeInLeave } = useSelector(
-    ({ EmployeeDetailReducers }) => EmployeeDetailReducers
-  );
-  const dispatch = useDispatch();
-  const role = localStorage.getItem("role");
-  const userName = localStorage.getItem("user_name");
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteRequest, setDeleteRequest] = useState(null);
+  const [openFilters, setOpenFilters] = useState(false);
   const [filters, setFilters] = useState({
     startDate: "",
     endDate: "",
-    leaveType: "",
+    includePaidLeave: false,
+    includeUnpaidLeave: false,
     status: "",
     search: "",
   });
-  const [openFilters, setOpenFilters] = useState(false);
+  const currentDate = new Date().toISOString().split("T")[0];
 
-  const filteredRequests = requests.filter((request) => {
-    return (
-      (filters.status === "" || request.status === filters.status) &&
-      (filters.leaveType === "" || request.leave_type === filters.leaveType) &&
-      (filters.search === "" ||
-        request.user_name
-          .toLowerCase()
-          .includes(filters.search.toLowerCase()) ||
-        request.user_id.toLowerCase().includes(filters.search.toLowerCase())) &&
-      (filters.startDate === "" ||
-        new Date(request.start_date) >= new Date(filters.startDate)) &&
-      (filters.endDate === "" ||
-        new Date(request.end_date) <= new Date(filters.endDate))
-    );
-  });
-//   const matchedRequests = filteredRequests.filter(
-//     (request) =>
-//       senderId?.trim() === request.user_id?.trim() &&
-//       startDateLeave?.trim() === request.start_date?.trim()
-//   );
-// if (matchedRequests.length === 0 && filteredRequests.length > 0) {
-//   toast.warning("A leave request was sent but has been deleted.");
-// }
-  useEffect(() => {
-    fetchRequests();
-  }, []);
-
-  const fetchRequests = async () => {
+  const fetchRequests = async (currentpage = 1) => {
     try {
       setLoading(true);
-
-      const response = await dispatch(GetEmployeeLeaveDetailAction());
-      setRequests(
-        response.map((request) => ({
-          ...request,
-          totalLeaveDays: calculateTotalLeaveDays(
-            request.start_date,
-            request.end_date
-          ),
-        }))
+      const response = await axios.get(
+        `http://localhost:5000/api/leave/get-all-leave?page=${currentpage}&limit=${apiLimit}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("authtoken")}`,
+          },
+        }
       );
+      setRequests(response?.data?.data || []);
+      const total = response?.data?.pagination?.totalPages || 1;
+      const AllAPILimit = response?.data?.pagination?.limit || 10;
+      setApiLimit(AllAPILimit);
+      setTotalPages(total);
     } catch (error) {
-      console.error("Error fetching requests:", error);
+      // console.error("Error fetching requests:", error);
+      toast.error(error.response.data.message);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    const fetchAndProcessRequests = async () => {
-      setLoading(true);
-
-      try {
-        let fetchedRequests = [];
-
-        if (role === "hr") {
-          fetchedRequests = TotalEmployeeInLeave.filter(
-            (item) => item.user_name !== userName
-          );
-        } else {
-          fetchedRequests = TotalEmployeeInLeave;
-        }
-
-        const updatedRequests = fetchedRequests.map((request) => {
-          const validRequest = {
-            id: request.id || "",
-            apply_date: request.apply_date || "N/A",
-            user_name: request.user_name || "Unknown",
-            user_id: request.user_id || "N/A",
-            leave_type: request.leave_type || "N/A",
-            start_date: request.start_date || null,
-            end_date: request.end_date || null,
-            reason_for_leave: request.reason_for_leave || "No reason provided",
-            status: request.status || "Pending",
-            hr_note: request.hr_note || "",
-            totalLeaveDays: calculateTotalLeaveDays(
-              request.start_date,
-              request.end_date
-            ),
-          };
-
-          if (
-            validRequest.status === "Pending" &&
-            validRequest.end_date &&
-            new Date(validRequest.end_date) < new Date()
-          ) {
-            validRequest.status = "Reject";
-            validRequest.hr_note = "Auto-rejected as the leave date has passed";
-
-            axios
-              .put(
-                `${import.meta.env.VITE_API_LEAVE}/${validRequest.id}`,
-                validRequest,
-                {
-                  headers: {
-                    Authorization: `Bearer ${localStorage.getItem(
-                      "authtoken"
-                    )}`,
-                  },
-                }
-              )
-              .catch((error) =>
-                console.error("Error auto-rejecting leave request:", error)
-              );
-          }
-
-          return validRequest;
-        });
-
-        setRequests(updatedRequests);
-
-        // Calculate pending leave requests
-        const pendingCount = updatedRequests.filter(
-          (request) => request.status === "Pending"
-        ).length;
-        setPendingCount(pendingCount);
-      } catch (error) {
-        console.error("Error fetching leave requests:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchAndProcessRequests();
-  }, [TotalEmployeeInLeave, userName, role, setPendingCount]);
-
-  const calculateTotalLeaveDays = (startDate, endDate) => {
-    if (!startDate || !endDate) return 0; // Handle missing dates
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    if (isNaN(start.getTime()) || isNaN(end.getTime())) return 0; // Handle invalid dates
-    const diff = Math.abs(end - start);
-    return Math.ceil(diff / (1000 * 60 * 60 * 24)) + 1;
+    fetchRequests(page);
+  }, [page]);
+  const handlePageChange = (event, value) => {
+    setPage(value);
   };
+  const handleAction = async (action) => {
+    if (!selectedRequest) return;
 
-  const handleAction = (action) => {
     setLoading(true);
-    const updatedRequest = {
-      ...selectedRequest,
-      status: action,
-      hr_note: note,
-      totalLeaveDays: calculateTotalLeaveDays(
-        selectedRequest.start_date,
-        selectedRequest.end_date
-      ),
-    };
+    try {
+      const updatedRequest = {
+        ...selectedRequest,
+        status: action.toLowerCase(),
+        hr_note: note,
+      };
 
-    axios
-      .put(
-        `${import.meta.env.VITE_API_LEAVE}/${selectedRequest.id}`,
+      await axios.put(
+        `http://localhost:5000/api/leave/leave-decision/${selectedRequest._id}`,
         updatedRequest,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("authtoken")}`,
           },
         }
-      )
-      .then((response) => {
-        const newRequests = requests.map((req) =>
-          req.id === response.data.id ? response.data : req
-        );
-        setRequests(newRequests);
-        toast.success("Leave request updated successfully");
-        fetchRequests();
-        setLoading(false);
+      );
 
-        // Update pending count after the state is updated
-        const newPendingCount = newRequests.filter(
-          (request) => request.status === "Pending"
-        ).length;
-        setPendingCount(newPendingCount);
-
-        setSelectedRequest(null);
-        setNote("");
-        setModalType("");
-      })
-      .catch((error) => {
-        // console.error("Error updating leave request:", error);
-        toast.error("Error updating leave request", error);
-      });
+      toast.success("Leave request updated successfully");
+      fetchRequests(); // Refresh list
+      setSelectedRequest(null);
+      setNote("");
+      setModalType("");
+    } catch (error) {
+      toast.error(error.response.data.message);
+      // console.error(error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleDeleteRequest = async () => {
     if (!deleteRequest) return;
-
     try {
       await axios.delete(
-        `${import.meta.env.VITE_API_LEAVE}/${deleteRequest.id}`,
+        `http://localhost:5000/api/leave/delete-leave/${deleteRequest._id}`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("authtoken")}`,
           },
         }
       );
-
-      const updatedRequests = requests.filter(
-        (req) => req.id !== deleteRequest.id
-      );
-      setRequests(updatedRequests);
       toast.success("Leave request deleted successfully");
+      fetchRequests();
     } catch (error) {
-      console.error("Error deleting leave request:", error);
-      toast.error("Failed to delete leave request");
+      // console.error("Error deleting leave request:", error);
+      toast.error(error.response.data.message);
     } finally {
       setShowDeleteModal(false);
       setDeleteRequest(null);
     }
   };
+
+  const filteredRequests = requests.filter((request) => {
+    return (
+      (filters.status === "" || request.status === filters.status) &&
+      (!filters.includePaidLeave || request.paid_leave_days > 0) &&
+      (!filters.includeUnpaidLeave || request.unpaid_leave_days > 0) &&
+      (filters.search === "" ||
+        request.username
+          ?.toLowerCase()
+          .includes(filters.search.toLowerCase()) ||
+        request.user_id
+          ?.toLowerCase()
+          .includes(filters.search.toLowerCase())) &&
+      (filters.startDate === "" ||
+        new Date(request.start_date) >= new Date(filters.startDate)) &&
+      (filters.endDate === "" ||
+        new Date(request.end_date) <= new Date(filters.endDate))
+    );
+  });
+  
 
   return (
     <div className="container mt-4">
@@ -261,25 +155,19 @@ const LeaveRequests = ({ setPendingCount }) => {
           <i
             className="bi bi-arrow-left-circle"
             onClick={() => window.history.back()}
-            style={{
-              cursor: "pointer",
-              fontSize: "32px",
-              color: "#343a40",
-            }}
+            style={{ cursor: "pointer", fontSize: "32px", color: "#343a40" }}
           ></i>
         </Col>
         <Col md={5}>
           <h3 className="mt-2">Leave Request</h3>
         </Col>
-
         <Col md={3} style={{ textAlign: "right" }}>
           <Button
             variant="light"
             onClick={() => setOpenFilters(!openFilters)}
             aria-controls="filter-collapse"
           >
-            <i className="bi bi-filter"> </i>
-            {/* {openFilters ? "Hide Filters" : "Show Filters"} */}
+            <i className="bi bi-filter" />
           </Button>
         </Col>
         <Col md={3} style={{ textAlign: "right" }}>
@@ -288,9 +176,10 @@ const LeaveRequests = ({ setPendingCount }) => {
           </Link>
         </Col>
       </Row>
+
       <Collapse in={openFilters}>
         <div id="filter-collapse" className="mt-3">
-          <Form className="mb-3 overflow-x-hidden">
+          <Form className="mb-3">
             <Row>
               <Col md={3}>
                 <Form.Control
@@ -302,7 +191,6 @@ const LeaveRequests = ({ setPendingCount }) => {
                   }
                 />
               </Col>
-
               <Col md={2}>
                 <Form.Select
                   value={filters.status}
@@ -311,25 +199,32 @@ const LeaveRequests = ({ setPendingCount }) => {
                   }
                 >
                   <option value="">All Status</option>
-                  <option value="Pending">Pending</option>
-                  <option value="Accept">Approved</option>
-                  <option value="Reject">Rejected</option>
+                  <option value="submitted">Submitted</option>
+                  <option value="accepted">Accepted</option>
+                  <option value="rejected">Rejected</option>
                 </Form.Select>
               </Col>
-
               <Col md={2}>
-                <Form.Select
-                  value={filters.leaveType}
+                <Form.Check
+                  type="checkbox"
+                  label="Paid Leave"
+                  checked={filters.includePaidLeave}
                   onChange={(e) =>
-                    setFilters({ ...filters, leaveType: e.target.value })
+                    setFilters({ ...filters, includePaidLeave: e.target.checked })
                   }
-                >
-                  <option value="">All Leave Types</option>
-                  <option value="Paid Leave">Paid Leave</option>
-                  <option value="Unpaid Leave">Unpaid Leave</option>
-                </Form.Select>
+                />
+                <Form.Check
+                  type="checkbox"
+                  label="Unpaid Leave"
+                  checked={filters.includeUnpaidLeave}
+                  onChange={(e) =>
+                    setFilters({
+                      ...filters,
+                      includeUnpaidLeave: e.target.checked,
+                    })
+                  }
+                />
               </Col>
-
               <Col md={2}>
                 <Form.Control
                   type="date"
@@ -339,7 +234,6 @@ const LeaveRequests = ({ setPendingCount }) => {
                   }
                 />
               </Col>
-
               <Col md={2}>
                 <Form.Control
                   type="date"
@@ -349,14 +243,14 @@ const LeaveRequests = ({ setPendingCount }) => {
                   }
                 />
               </Col>
-
               <Col md={1}>
                 <Button
                   variant="danger"
                   onClick={() =>
                     setFilters({
                       status: "",
-                      leaveType: "",
+                      paidLeave: "",
+                      unPaidLeave: "",
                       startDate: "",
                       endDate: "",
                       search: "",
@@ -376,12 +270,13 @@ const LeaveRequests = ({ setPendingCount }) => {
           <tr>
             <th>No.</th>
             <th>Date</th>
-            <th>Employee Name/ID</th>
-            <th>Leave Type</th>
-            <th>Start Date</th>
-            <th>End Date</th>
-            <th>Reason for Leave</th>
-            <th>Total Leave Days</th>
+            <th>Employee Name / ID</th>
+            <th>Start</th>
+            <th>End</th>
+            <th>Paid Days</th>
+            <th>Unpaid Days</th>
+            <th>Total</th>
+            <th>Reason</th>
             <th>Status</th>
             <th>Actions</th>
             <th>Note</th>
@@ -390,51 +285,45 @@ const LeaveRequests = ({ setPendingCount }) => {
         <tbody>
           {loading ? (
             <tr>
-              <td colSpan="10" className="text-center">
+              <td colSpan="11" className="text-center">
                 <div
-                  className="d-flex justify-content-center align-items-center"
                   style={{ height: "200px" }}
+                  className="d-flex justify-content-center align-items-center"
                 >
                   <LoaderSpiner />
                 </div>
               </td>
             </tr>
           ) : (
-              filteredRequests.map((request, index) => {
+            filteredRequests.map((request, index) => {
               const isHighlighted =
                 senderId?.trim() === request.user_id?.trim() &&
                 startDateLeave?.trim() === request.start_date?.trim();
 
               return (
                 <tr
-                  key={request.id}
+                  key={request._id}
                   className={isHighlighted ? "highlighted-row" : ""}
                 >
-                  <td>{index + 1}</td>
-                  <td>{request.apply_date || "N/A"}</td>
-                  <td>{`${request.user_name || "N/A"}/${
-                    request.user_id || "N/A"
-                  }`}</td>
-                  <td>{request.leave_type || "N/A"}</td>
-                  <td>{request.start_date || "N/A"}</td>
-                  <td>{request.end_date || "N/A"}</td>
-                  <td>{request.reason_for_leave || "N/A"}</td>
-                  <td>
-                    {calculateTotalLeaveDays(
-                      request.start_date,
-                      request.end_date
-                    )}
-                  </td>
-                  <td>{request.status || "N/A"}</td>
+                  <td>{(page - 1) * apiLimit + index + 1}</td>
+                  <td>{request?.apply_date?.split("T")[0]}</td>
+                  <td>{`${request?.username}`}</td>
+                  <td>{request?.start_date?.split("T")[0]}</td>
+                  <td>{request?.end_date?.split("T")[0]}</td>
+                  <td>{request?.paid_leave_days}</td>
+                  <td>{request?.unpaid_leave_days}</td>
+                  <td>{request?.total_leave_days}</td>
+                  <td>{request?.reason_for_leave}</td>
+                  <td>{request?.status}</td>
                   <td>
                     <Button
                       variant="success"
                       size="sm"
+                      className="me-2"
                       onClick={() => {
                         setSelectedRequest(request);
-                        setModalType("Accept");
+                        setModalType("accepted");
                       }}
-                      className="me-2"
                       disabled={
                         new Date(request.start_date) < new Date(currentDate)
                       }
@@ -444,9 +333,10 @@ const LeaveRequests = ({ setPendingCount }) => {
                     <Button
                       variant="danger"
                       size="sm"
+                      className="me-2"
                       onClick={() => {
                         setSelectedRequest(request);
-                        setModalType("Reject");
+                        setModalType("rejected");
                       }}
                       disabled={
                         new Date(request.start_date) < new Date(currentDate)
@@ -455,15 +345,12 @@ const LeaveRequests = ({ setPendingCount }) => {
                       Reject
                     </Button>
                     <Button
-                      variant="danger"
+                      variant="outline-danger"
                       size="sm"
                       onClick={() => {
                         setDeleteRequest(request);
                         setShowDeleteModal(true);
                       }}
-                      disabled={
-                        new Date(request.start_date) < new Date(currentDate)
-                      }
                     >
                       Delete
                     </Button>
@@ -476,6 +363,7 @@ const LeaveRequests = ({ setPendingCount }) => {
         </tbody>
       </Table>
 
+      {/* Accept/Reject Modal */}
       <Modal
         show={!!selectedRequest}
         onHide={() => setSelectedRequest(null)}
@@ -501,18 +389,16 @@ const LeaveRequests = ({ setPendingCount }) => {
           <Button variant="secondary" onClick={() => setSelectedRequest(null)}>
             Cancel
           </Button>
-          <Button
-            variant="primary"
-            onClick={() => handleAction(modalType)}
-            disabled={loading}
-          >
-            Save
+          <Button variant="primary" onClick={() => handleAction(modalType)}>
+            Save{" "}
             {loading && (
               <Spinner animation="border" size="sm" className="ms-2" />
             )}
           </Button>
         </Modal.Footer>
       </Modal>
+
+      {/* Delete Confirmation Modal */}
       <Modal
         show={showDeleteModal}
         onHide={() => setShowDeleteModal(false)}
@@ -533,6 +419,15 @@ const LeaveRequests = ({ setPendingCount }) => {
           </Button>
         </Modal.Footer>
       </Modal>
+      <div>
+              <Stack spacing={2} className="mt-4">
+                <Pagination
+                  count={totalPages}
+                  page={page}
+                  onChange={handlePageChange}
+                />
+              </Stack>
+            </div>
     </div>
   );
 };

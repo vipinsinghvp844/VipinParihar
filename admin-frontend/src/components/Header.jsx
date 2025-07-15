@@ -100,7 +100,7 @@ const Header = ({ onLogout }) => {
         const profileImage = await dispatch(FetchUserProfileAction());
 // console.log(profileImage,"==============================");
 
-        setProfileImage(profileImage.data.profile.profile_image);
+        setProfileImage(profileImage?.data?.profile?.profile_image);
       } catch (error) {
         console.error("Error fetching user profile:", error);
       }
@@ -205,7 +205,7 @@ const Header = ({ onLogout }) => {
                     alt="Profile"
                     className="popup-profile-image"
                   />
-                  <h5>{loginUserData?.name}</h5>
+                  <h5>{loginUserData?.username}</h5>
                   <p>{loginUserData?.email}</p>
                   <Link
                     to="/manage-your-account"

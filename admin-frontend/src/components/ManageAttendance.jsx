@@ -36,6 +36,8 @@ const ManageAttendance = () => {
       setIsLoading(true);
       try {
         const employeeUsers = TotalUsers;
+        console.log(employeeUsers,"employeeusers");
+        
         setEmployees(employeeUsers);
       } catch (error) {
         console.error("Error fetching employees:", error);
@@ -47,6 +49,7 @@ const ManageAttendance = () => {
 
     fetchEmployees();
   }, [TotalUsers]);
+  
 
   const handleAttendanceDetails = async (userId) => {
     try {
@@ -73,6 +76,7 @@ const ManageAttendance = () => {
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const currentUsers = employees.slice(startIndex, endIndex);
+  
 
   const handlePageChange = (pageNumber) => {
     setCurrentPage(pageNumber);
@@ -125,34 +129,40 @@ const ManageAttendance = () => {
               </tr>
             </thead>
             <tbody>
-              {currentUsers.map((employee, index) => (
-                <tr key={employee.id}>
-                  <td>{startIndex + index + 1}</td>
-                  <td>{employee.firstname}</td>
-                  <td>{employee.lastname}</td>
-                  <td>{employee.email}</td>
-                  <td>{employee.mobile}</td>
-                  <td>{employee.role}</td>
-                  <td>
-                    <Button
-                      variant="info"
-                      className="action-button"
-                      onClick={() => handlePersonalDetails(employee._id)}
-                      title="View Personal Report"
-                    >
-                      <FaEye />
-                    </Button>
-                    <Button
-                      variant="info"
-                      className="action-button"
-                      onClick={() => handleAttendanceDetails(employee._id)}
-                      title="View Attendance Report"
-                    >
-                      <i className="bi bi-calendar-check"></i>
-                    </Button>
-                  </td>
-                </tr>
-              ))}
+                {currentUsers.map((employee, index) => {
+                  const {
+                    personalInfo = {},
+                    // employmentInfo = {},
+                    // bankDetails = {},
+                  } = employee;
+                  return(
+                  <tr key={employee.id}>
+                    <td>{startIndex + index + 1}</td>
+                    <td>{personalInfo.firstname}</td>
+                    <td>{personalInfo.lastname}</td>
+                    <td>{employee.email}</td>
+                    <td>{personalInfo.mobile}</td>
+                    <td>{employee.role}</td>
+                    <td>
+                      <Button
+                        variant="info"
+                        className="action-button"
+                        onClick={() => handlePersonalDetails(employee._id)}
+                        title="View Personal Report"
+                      >
+                        <FaEye />
+                      </Button>
+                      <Button
+                        variant="info"
+                        className="action-button"
+                        onClick={() => handleAttendanceDetails(employee._id)}
+                        title="View Attendance Report"
+                      >
+                        <i className="bi bi-calendar-check"></i>
+                      </Button>
+                    </td>
+                  </tr>
+               ) })}
             </tbody>
           </Table>
         )}

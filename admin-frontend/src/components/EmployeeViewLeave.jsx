@@ -1,182 +1,147 @@
 import React, { useState, useEffect } from "react";
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import { DemoContainer } from '@mui/x-date-pickers/internals/demo';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import dayjs from "dayjs";
-import {
-  Container,
-  Table,
-  Spinner,
-  Alert,
-  Button,
-  Modal,
-  Row,
-  Col,
-} from "react-bootstrap";
+import { Container, Table, Button, Modal, Row, Col, Form } from "react-bootstrap";
 import { Link } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
 import axios from "axios";
 import LoaderSpiner from "./LoaderSpiner";
 import { toast } from "react-toastify";
-import TuneIcon from '@mui/icons-material/Tune';
-import { GetEmployeeLeaveDetailAction } from "../../redux/actions/EmployeeDetailsAction";
-import { Autocomplete, Box, Grid, IconButton, Popover, TextField } from "@mui/material";
-import CloseIcon from '@mui/icons-material/Close';
-import { GetEmployeeLeaveDetailActionById } from "../../redux/actions/EmployeeDetailsAction";
+import Pagination from "@mui/material/Pagination";
+import Stack from "@mui/material/Stack";
 
 const EmployeeViewLeave = () => {
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [apiLimit, setApiLimit] = useState(10);
   const [requests, setRequests] = useState([]);
-  const [TotalRequetData, setTotalRequestData] = useState([])
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [loggedInUserId, setLoggedInUserId] = useState(null);
   const [showConfirm, setShowConfirm] = useState(false);
   const [deleteRequestId, setDeleteRequestId] = useState(null);
+  const [updateRequestId, setUpdateRequestId] = useState(null);
   const [deleting, setDeleting] = useState(false);
-  const dispatch = useDispatch();
-
-
-  // jay working code start
-
-  const [leaveType, setLeaveType] = useState(['Unpaid Leave', 'Paid Leave'])
-  const [StatusStore, setStatus] = useState(['Rejected', 'Accept', 'Pending', 'Reject'])
-  const [totalDayes, setTotalDays] = useState(['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23', '24', '25', '26', '27', '28', '29', '30', '31'])
-  const [filterCriteria, setFilterCriteria] = useState({
-    start_date: '',
-    end_date: '',
-    leave_type: '',
-    total_leave_days: '',
-    status: '',
-    reason_for_leave: ''
-  })
-
-  const [anchorEl, setAnchorEl] = React.useState(null);
-  const open = Boolean(anchorEl);
-
-  const handleClick = (event) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleClose = () => {
-    setAnchorEl(null);
-  };
-
-  function handleFilter() {
-
-    setTimeout(() => {
-      const filteredData = TotalRequetData.filter(item => {
-        return Object.entries(filterCriteria).every(([key, value]) => {
-          if (value == "" || value == undefined || value == null) {
-            return true
-          }
-          else if (key == 'reason_for_leave') {
-            return item[key].toLowerCase().includes(value.toLowerCase())
-          }
-          else {
-            return item[key] == value
-          }
-
-        });
-      });
-
-      console.log('handleFilter', filteredData)
-      setRequests(filteredData)
-      handleClose()
-    }, 1000);
-  }
-
-  function removeFilter() {
-    setRequests(TotalRequetData)
-    setFilterCriteria({
-      start_date: '',
-      end_date: '',
-      leave_type: '',
-      total_leave_days: '',
-      status: '',
-      reason_for_leave: ''
-    });
-    setAnchorEl(null);
-    fetchLeaveData()
-  }
-
-  // jay working code end
-
+  const [updating, setUpdating] = useState(false);
+  const [updateModal, setUpdateModal] = useState(false);
+  const token = localStorage.getItem("authtoken");
+  const [leaveData, setLeaveData] = useState({
+    start_date: "",
+    end_date: "",
+    paid_leave_days: 0,
+    unpaid_leave_days: 0,
+    reason_for_leave: "",
+  });
   useEffect(() => {
-    fetchLeaveData(); // Call the async function
-  }, [dispatch]);
+    fetchLeaveData(page);
+  }, [page]);
 
-  const fetchLeaveData = async () => {
+  const fetchLeaveData = async (currentpage = 1) => {
     try {
-      const user_id = localStorage.getItem("user_id");
-      if (!user_id) {
-        setError("User not logged in. Please log in and try again.");
-        setLoading(false);
-        return;
-      }
-
-       setLoggedInUserId(user_id);
-      const response = await dispatch(GetEmployeeLeaveDetailActionById());
-      // setRequests(response.data);
-      const filtdata = response.filter(
-        (data) => String(data.user_id).trim() === String(user_id).trim()
+      const response = await axios.get(
+        `http://localhost:5000/api/leave/get-leave?page=${currentpage}&limit=${apiLimit}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
       );
-      setRequests(filtdata);
-      setTotalRequestData(filtdata)
-      setLoading(false);
-    } catch (error) {
-      setError("Error fetching leave requests.");
+      setRequests(response.data.data);
+      const total = response.data.pagination.totalPages || 1;
+      const AlLimit = response.data.pagination.limit || 10;
+      setApiLimit(AlLimit);      
+      setTotalPages(total);
+    } catch (err) {
+      toast.error("Error fetching leave data.");
     } finally {
       setLoading(false);
     }
   };
-
-
-  const handleDelete = (requestId) => {
-    if (!loggedInUserId) {
-      setError("User not logged in. Please log in and try again.");
-      return;
-    }
-
-    const request = requests.find((req) => req.id === requestId);
-    const hrActionTaken = request?.status && request.status !== "Pending";
-
-    if (hrActionTaken) {
-      // setError(
-      //   "Action by HR has already been taken on this request. Deletion not allowed."
-      // );
-      toast.error("Action by HR has already been taken on this request. Deletion not allowed.")
-      return;
-    }
-
-    setShowConfirm(true);
-    setDeleteRequestId(requestId);
+  const handlePageChange = (event, value) => {
+    setPage(value); // MUI provides 1-based page number
   };
-  const userId = localStorage.getItem("user_id");
+
+  const handleDelete = (id, status) => {
+    console.log(status);
+    
+    if (status !== "submitted") {
+      toast.error("Leave already reviewed by HR. Deletion not allowed.");
+      return;
+    }
+    setShowConfirm(true);
+    setDeleteRequestId(id);
+  };
+  const handleUpdate = (id, status) => {
+    if (status !== "submitted") {
+      toast.error("Leave already reviewed by HR. Updation not allowed.");
+      return;
+    }
+    const leave = requests.find((req) => req._id === id);
+    if (leave) {
+      setLeaveData({
+        start_date: leave.start_date,
+        end_date: leave.end_date,
+        paid_leave_days: leave.paid_leave_days,
+        unpaid_leave_days: leave.unpaid_leave_days,
+        reason_for_leave: leave.reason_for_leave,
+      });
+    }
+    setUpdateModal(true);
+    setUpdateRequestId(id);
+  };
+
   const confirmDelete = async () => {
     setDeleting(true);
     try {
       await axios.delete(
-        `${import.meta.env.VITE_API_LEAVE}/${userId}?id=${deleteRequestId}`,
+        `http://localhost:5000/api/leave/delete-leave/${deleteRequestId}`,
         {
-          data: { user_id: loggedInUserId },
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("authtoken")}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
         }
       );
-
-      setRequests((prevRequests) =>
-        prevRequests.filter((request) => request.id !== deleteRequestId)
-      );
-      toast.success("Request deleted successfully")
-      setShowConfirm(false);
-      setDeleteRequestId(null);
-    } catch (error) {
-      console.error("Error deleting leave request:", error);
-      setError("Error deleting leave request. Please try again later.");
+      setRequests((prev) => prev.filter((req) => req._id !== deleteRequestId));
+      toast.success("Leave request deleted successfully");
+    } catch (err) {
+      toast.error("Failed to delete leave request");
     } finally {
       setDeleting(false);
+      setShowConfirm(false);
+      setDeleteRequestId(null);
+    }
+  };
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    const updated = { ...leaveData, [name]: value };
+
+    // Auto-calculate end date if start date or leave days change
+    if (
+      name === "start_date" ||
+      name === "paid_leave_days" ||
+      name === "unpaid_leave_days"
+    ) {
+      const total =
+        Number(updated.paid_leave_days) + Number(updated.unpaid_leave_days) - 1;
+      if (updated.start_date && total >= 0) {
+        const newEndDate = new Date(updated.start_date);
+        newEndDate.setDate(newEndDate.getDate() + total);
+        updated.end_date = newEndDate.toISOString().split("T")[0];
+      }
+    }
+
+    setLeaveData(updated);
+  };
+  
+  const updateLeave = async () => {
+    setUpdating(true);
+    try {
+      await axios.put(
+        `http://localhost:5000/api/leave/update-leave/${updateRequestId}`,
+        leaveData,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      setRequests((prev) => prev.filter((req) => req._id !== updateRequestId));
+      toast.success("Leave request updated successfully");
+    } catch (err) {
+      toast.error(err.response.data.message);
+    } finally {
+      setUpdating(false);
+      setUpdateModal(false);
+      setUpdateRequestId(null);
     }
   };
 
@@ -187,181 +152,30 @@ const EmployeeViewLeave = () => {
           <i
             className="bi bi-arrow-left-circle"
             onClick={() => window.history.back()}
-            style={{
-              cursor: "pointer",
-              fontSize: "32px",
-              color: "#343a40",
-            }}
-          ></i>
+            style={{ cursor: "pointer", fontSize: "32px", color: "#343a40" }}
+          />
         </Col>
         <Col md={9}>
-          <h3 className="mt-2 ">Apply Leave</h3>
+          <h3 className="mt-2">My Leave Requests</h3>
         </Col>
-      </Row>
-
-      <div className="d-flex justify-content-between mb-2">
-        <div>
-          <Button variant="" className='min-width-auto px-2 btn-blue' size='small' onClick={handleClick}>
-            <TuneIcon />
-          </Button>
-
-          <Popover
-            // id={id}
-            open={open}
-            anchorEl={anchorEl}
-            onClose={handleClose}
-            anchorOrigin={{
-              vertical: 'bottom',
-              horizontal: 'left',
-            }}
-
-            className='p-5'
-
-          >
-            <Box className='client-details-filter p-2'
-              sx={{ maxWidth: '460px', width: '460px', margin: '10px' }}
-            >
-
-              <Grid Grid container rowSpacing={0} columnSpacing={2}>
-                <Grid item xs={12} sm={12} md={12} lg={6} xl={6} xxl={6}>
-                  <Autocomplete
-                    disablePortal
-                    options={leaveType}
-                    renderInput={(params) => <TextField {...params} label="Leave Type" />}
-                    size="small"
-                    value={filterCriteria.leave_type}
-                    onChange={(e, newValue) => {
-                      setFilterCriteria((prev) => ({
-                        ...prev,
-                        leave_type: newValue
-                      }));
-
-                    }}
-                    id="leaveType"
-                  />
-                </Grid>
-
-                <Grid item xs={12} sm={12} md={12} lg={6} xl={6} xxl={6} className="">
-                  <Autocomplete
-                    disablePortal
-                    options={StatusStore}
-                    renderInput={(params) => <TextField {...params} label="Status" />}
-                    size="small"
-                    value={filterCriteria.status}
-                    onChange={(e, newValue) => {
-                      setFilterCriteria((prev) => ({
-                        ...prev,
-                        status: newValue
-                      }));
-                    }}
-                    id="Status"
-                  />
-                </Grid>
-
-
-                <Grid item xs={12} sm={12} md={12} lg={6} xl={6} xxl={6} className="mt-3">
-                  <TextField id="ResonForLeave" label="Reson For Leave" variant="outlined" size="small" value={filterCriteria.reason_for_leave} fullWidth onChange={(e, newValue) => {
-                    setFilterCriteria((prev) => ({
-                      ...prev,
-                      reason_for_leave: e.target.value || ''
-                    }));
-                  }} />
-                </Grid>
-
-                <Grid item xs={12} sm={12} md={12} lg={6} xl={6} xxl={6} className="mt-3">
-                  <Autocomplete
-                    disablePortal
-                    options={totalDayes}
-                    renderInput={(params) => <TextField {...params} label="Total Days" />}
-                    size="small"
-                    value={filterCriteria.total_leave_days}
-                    onChange={(e, newValue) => {
-                      console.log('Status', Status)
-                      setFilterCriteria((prev) => ({
-                        ...prev,
-                        total_leave_days: newValue
-                      }));
-
-                    }}
-                    id="TotalDays"
-                  />
-                </Grid>
-
-
-
-                <Grid item xs={12} sm={12} md={12} lg={6} xl={6} xxl={6} className="mt-3">
-                  {/* <TextField id="ResonForLeave" label="Start Date" variant="outlined" size="small" /> */}
-                  <LocalizationProvider dateAdapter={AdapterDayjs}>
-                    <DemoContainer components={['DatePicker']}>
-                      <DatePicker
-                        label="Start Date"
-                        slotProps={{ textField: { size: 'small' } }}
-                        value={filterCriteria.start_date ? dayjs(filterCriteria.start_date) : null}
-                        onChange={(newValue) => {
-                          if (newValue) {
-                            setFilterCriteria((prev) => ({
-                              ...prev,
-                              start_date: dayjs(newValue).format('YYYY-MM-DD')
-                            }));
-
-                          }
-                        }}
-                      />
-                    </DemoContainer>
-                  </LocalizationProvider>
-                </Grid>
-
-                <Grid item xs={12} sm={12} md={12} lg={6} xl={6} xxl={6} className="mt-3">
-                  <LocalizationProvider dateAdapter={AdapterDayjs}>
-                    <DemoContainer components={['DatePicker']} >
-                      <DatePicker label="End Date"
-                        slotProps={{ textField: { size: 'small' } }}
-                        value={filterCriteria.end_date ? dayjs(filterCriteria.end_date) : null}
-                        onChange={(newValue) => {
-                          if (newValue) {
-                            setFilterCriteria((prev) => ({
-                              ...prev,
-                              end_date: dayjs(newValue).format('YYYY-MM-DD')
-                            }));
-
-                          }
-                        }} />
-                    </DemoContainer>
-                  </LocalizationProvider>
-                </Grid>
-
-                <Grid item xs={12} sm={12} md={12} lg={12} xl={12} xxl={12} className="mt-3">
-                  <div className="d-flex justify-content-end">
-                    <Button className="btn-red mx-2" size="small" onClick={removeFilter}>Close</Button>
-                    <Button className="btn-blue" size="small" onClick={handleFilter}>Apply</Button>
-                  </div>
-                </Grid>
-              </Grid>
-
-            </Box>
-          </Popover>
-        </div>
-
-        <div>
-          <IconButton className=" me-3" title="Clea filter" onClick={removeFilter}>
-            <CloseIcon />
-          </IconButton>
-
-          <Link to={"/apply-leave"}>
+        <Col className="text-end">
+          <Link to="/apply-leave">
             <Button className="btn-blue">Apply Leave</Button>
           </Link>
-        </div>
-      </div>
+        </Col>
+      </Row>
 
       <Table striped bordered hover responsive>
         <thead>
           <tr>
+            <th>Sr.No</th>
             <th>Date</th>
-            <th>Leave Type</th>
-            <th>Start Date</th>
-            <th>End Date</th>
-            <th>Reason for Leave</th>
-            <th>Total Days</th>
+            <th>Start</th>
+            <th>End</th>
+            <th>Paid</th>
+            <th>Unpaid</th>
+            <th>Total</th>
+            <th>Reason</th>
             <th>Status</th>
             <th>HR Note</th>
             <th>Actions</th>
@@ -370,41 +184,48 @@ const EmployeeViewLeave = () => {
         <tbody>
           {loading ? (
             <tr>
-              <td colSpan="9" className="text-center">
-                <div
-                  className="d-flex justify-content-center align-items-center"
-                  style={{ height: "200px" }}
-                >
-                  <LoaderSpiner />
-                </div>
+              <td colSpan="10" className="text-center">
+                <LoaderSpiner />
               </td>
             </tr>
           ) : requests.length > 0 ? (
-            requests.map((request) => (
-              <tr key={request.id}>
-                <td>{request.apply_date}</td>
-                <td>{request.leave_type}</td>
-                <td>{request.start_date}</td>
-                <td>{request.end_date}</td>
-                <td>{request.reason_for_leave}</td>
-                <td>{request.total_leave_days}</td>
-                <td>{request.status}</td>
-                <td>{request.hr_note || "N/A"}</td>
+            requests.map((req, index) => (
+              <tr key={req._id}>
+                <td>{(page - 1) * apiLimit + index + 1}</td>
+                <td>{new Date(req.apply_date).toLocaleDateString("en-GB")}</td>
+                <td>{new Date(req.start_date).toLocaleDateString("en-GB")}</td>
+                <td>{new Date(req.end_date).toLocaleDateString("en-GB")}</td>
+                <td>{req.paid_leave_days}</td>
+                <td>{req.unpaid_leave_days}</td>
+                <td>{req.total_leave_days}</td>
+                <td>{req.reason_for_leave}</td>
+                <td>{req.status}</td>
+                <td>{req.hr_note || "N/A"}</td>
                 <td>
                   <Button
                     variant="danger"
-                    onClick={() => handleDelete(request.id)}
+                    size="sm"
                     disabled={deleting}
+                    onClick={() => handleDelete(req._id, req.status)}
                   >
                     Delete
+                  </Button>
+
+                  <Button
+                    variant="danger"
+                    size="sm"
+                    disabled={deleting}
+                    onClick={() => handleUpdate(req._id, req.status)}
+                  >
+                    Update
                   </Button>
                 </td>
               </tr>
             ))
           ) : (
             <tr>
-              <td colSpan="9" className="text-center">
-                No Leave Taken
+              <td colSpan="10" className="text-center">
+                No leave requests found.
               </td>
             </tr>
           )}
@@ -413,11 +234,9 @@ const EmployeeViewLeave = () => {
 
       <Modal show={showConfirm} onHide={() => setShowConfirm(false)}>
         <Modal.Header closeButton>
-          <Modal.Title>Confirm Deletion</Modal.Title>
+          <Modal.Title>Confirm Delete</Modal.Title>
         </Modal.Header>
-        <Modal.Body>
-          Are you sure you want to delete this leave request?
-        </Modal.Body>
+        <Modal.Body>Are you sure you want to delete this request?</Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={() => setShowConfirm(false)}>
             Cancel
@@ -427,6 +246,83 @@ const EmployeeViewLeave = () => {
           </Button>
         </Modal.Footer>
       </Modal>
+      <Modal show={updateModal} onHide={() => setUpdateModal(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>Update Leave</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form>
+            <Form.Group className="mb-3" controlId="formStartDate">
+              <Form.Label>Start Date</Form.Label>
+              <Form.Control
+                type="date"
+                name="start_date"
+                value={
+                  leaveData.start_date
+                    ? leaveData.start_date.substring(0, 10)
+                    : ""
+                }
+                onChange={handleInputChange}
+              />
+            </Form.Group>
+            <Form.Group className="mb-3" controlId="formEndDate">
+              <Form.Label>End Date</Form.Label>
+              <Form.Control
+                type="Date"
+                name="end_date"
+                value={
+                  leaveData.end_date ? leaveData.end_date.substring(0, 10) : ""
+                }
+                onChange={handleInputChange}
+              />
+            </Form.Group>
+            <Form.Group className="mb-3" controlId="formPaidLeave">
+              <Form.Label>Paid Leave</Form.Label>
+              <Form.Control
+                type="number"
+                name="paid_leave_days"
+                value={leaveData.paid_leave_days}
+                onChange={handleInputChange}
+              />
+            </Form.Group>
+            <Form.Group className="mb-3" controlId="formUnpaidLeave">
+              <Form.Label>Unpaid Leave</Form.Label>
+              <Form.Control
+                type="number"
+                name="unpaid_leave_days"
+                value={leaveData.unpaid_leave_days}
+                onChange={handleInputChange}
+              />
+            </Form.Group>
+            <Form.Group className="mb-3" controlId="formReasonForLeave">
+              <Form.Label>Reason</Form.Label>
+              <Form.Control
+                type="text"
+                name="reason_for_leave"
+                value={leaveData.reason_for_leave}
+                onChange={handleInputChange}
+              />
+            </Form.Group>
+          </Form>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setUpdateModal(false)}>
+            Cancel
+          </Button>
+          <Button variant="danger" onClick={updateLeave} disabled={updating}>
+            {updating ? "Updating..." : "Update"}
+          </Button>
+        </Modal.Footer>
+      </Modal>
+      <div>
+        <Stack spacing={2} className="mt-4">
+          <Pagination
+            count={totalPages}
+            page={page}
+            onChange={handlePageChange}
+          />
+        </Stack>
+      </div>
     </Container>
   );
 };
