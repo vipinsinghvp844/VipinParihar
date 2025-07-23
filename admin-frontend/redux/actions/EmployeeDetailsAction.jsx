@@ -362,19 +362,18 @@ export const GetSpecificUserCahts =
   (selecteduserid, pageNum, callback) => async (dispatch) => {
     try {
       const response = await axios.get(
-        `${
-          import.meta.env.VITE_API_CHATTING
-        }?receiver_id=${selecteduserid}&page=${pageNum}`,
+        `http://localhost:5000/api/chats/get-user-chat/${selecteduserid}`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("authtoken")}`,
           },
         }
       );
-      if (response?.data) {
-        dispatch(GetSpecificUserCahtsReduser(response.data));
+      
+      if (response?.data?.chats) {
+        dispatch(GetSpecificUserCahtsReduser(response?.data?.chats));
 
-        callback(response.data);
+        callback(response?.data?.chats);
       }
 
       return response.data;

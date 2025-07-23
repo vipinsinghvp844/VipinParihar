@@ -6,9 +6,6 @@ import { GetTotalUserActionByUserId } from "../../redux/actions/EmployeeDetailsA
 import Spinner from "./LoaderSpiner";
 
 const PersonalInfo = () => {
-  const { loginUserProfile, TotalUsersId } = useSelector(
-    ({ EmployeeDetailReducers }) => EmployeeDetailReducers
-  );
 // console.log(TotalUsersId,"============================================");
 
   const [userInfo, setUserInfo] = useState("");
@@ -81,7 +78,7 @@ const PersonalInfo = () => {
                   <Form.Control
                     type="text"
                     name="first_name"
-                    value={userInfo.firstname || ""}
+                    value={userInfo.personalInfo.firstname || ""}
                     onChange={handleInputChange}
                   />
                 </Form.Group>
@@ -90,7 +87,7 @@ const PersonalInfo = () => {
                   <Form.Control
                     type="text"
                     name="last_name"
-                    value={userInfo.lastname || ""}
+                    value={userInfo.personalInfo.lastname || ""}
                     onChange={handleInputChange}
                   />
                 </Form.Group>
@@ -109,7 +106,7 @@ const PersonalInfo = () => {
                   <Form.Control
                     type="text"
                     name="mobile"
-                    value={userInfo.mobile || ""}
+                    value={userInfo.personalInfo.mobile || ""}
                     onChange={handleInputChange}
                   />
                 </Form.Group>
@@ -118,7 +115,7 @@ const PersonalInfo = () => {
                   <Form.Control
                     type="text"
                     name="address"
-                    value={userInfo.address || ""}
+                    value={userInfo.additionalInfoDetail.address || ""}
                     onChange={handleInputChange}
                   />
                 </Form.Group>
@@ -128,11 +125,11 @@ const PersonalInfo = () => {
               </Form>
             ) : (
               <div>
-                <p>First Name: {userInfo.firstname}</p>
-                <p>Last Name: {userInfo.lastname}</p>
-                <p>Email: {userInfo.email}</p>
-                <p>Mobile: {userInfo.mobile}</p>
-                <p>Address: {userInfo.address}</p>
+                <p>First Name: {userInfo?.personalInfo?.firstname}</p>
+                <p>Last Name: {userInfo?.personalInfo?.lastname}</p>
+                <p>Email: {userInfo?.email}</p>
+                <p>Mobile: {userInfo?.personalInfo?.mobile}</p>
+                <p>Address: {userInfo?.additionalInfoDetail?.address}</p>
                 <Button variant="secondary" onClick={() => setIsEditing(true)}>
                   Edit
                 </Button>

@@ -37,6 +37,8 @@ const ChatWindow = ({
   handleKeyDown,
   hasMore,
 }) => {
+  console.log(messages,"message");
+  
   if (!selectedUser) {
     return (
       <div style={{ paddingTop: "25%", paddingLeft: "30%" }}>
@@ -115,9 +117,9 @@ const ChatWindow = ({
         ) : (
             
           messages.map((msg, index) => {
-            const isSender = msg.sender_id === String(userId);
+            const isSender = msg.sender_id._id === String(userId);
 
-            const messageTime = new Date(msg.timestamp).toLocaleTimeString(
+            const messageTime = new Date(msg.updatedAt).toLocaleTimeString(
               "en-US",
               {
                 hour: "2-digit",
@@ -125,12 +127,12 @@ const ChatWindow = ({
               }
             );
 
-            const messageDate = new Date(msg.timestamp).toLocaleDateString(
+            const messageDate = new Date(msg.updatedAt).toLocaleDateString(
               "en-US"
             );
             const previousMessageDate =
               index > 0
-                ? new Date(messages[index - 1].timestamp).toLocaleDateString(
+                ? new Date(messages[index - 1].updatedAt).toLocaleDateString(
                     "en-US"
                   )
                 : null;

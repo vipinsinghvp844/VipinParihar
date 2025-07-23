@@ -1,7 +1,6 @@
 const mongoose = require("mongoose");
 const attendanceData = require("../models/attendanceApi");
 const leaveSchema = require('../models/leaveModel');
-const { response } = require("express");
 const User = require("../models/User");
 
 // 🧠 Helper function to calculate break durations

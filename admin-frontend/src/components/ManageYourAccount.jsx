@@ -51,15 +51,15 @@ const ManageYourAccount = () => {
     const base64Image = await getCroppedImg(selectedImage, croppedAreaPixels);
     setShowCropModal(false);
     if (!loginUserProfile) {
-      const response = await dispatch(ProfilePicUploadAction(base64Image));
-      console.log(response,"testpost");
-      
+      const response = await dispatch(ProfilePicUploadAction(base64Image));      
       if (response?.data) {
         setLoading(false);
       }
     } else {
       const response = await dispatch(ProfilePicUpdateAction(base64Image));
       if (response?.data) {
+        setLoading(false);
+      } else {
         setLoading(false);
       }
     }

@@ -18,7 +18,8 @@ const ChatBox = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [searchItem, setSearchItem] = useState("");
   const { AllProfilesImage } = useSelector(({ AllReducers }) => AllReducers);
-  const { TotalUsers, UserSpecificChats, AllUnseenUserAndMessages } =
+  
+  const { TotalUsers } =
     useSelector(({ EmployeeDetailReducers }) => EmployeeDetailReducers);
   const userId = localStorage.getItem("user_id");
   const [socket, setSocket] = useState(null);
@@ -43,11 +44,15 @@ const ChatBox = () => {
   const dispatch = useDispatch();
   const [page, setPage] = useState(1); // Current page number
   const [hasMore, setHasMore] = useState(true); // If more messages exist
+  const [users, setUsers] = useState([]);
+  const [usersWithImages, setUsersWithImages] = useState([]);
+
 
   useEffect(() => {
     const fetchUsers = async () => {
       try {
         const response = await dispatch(GetTotalUserAction());
+        setUsers(response.data)
       } catch (error) {
         console.error("Error fetching users:", error);
       }
@@ -166,31 +171,70 @@ const ChatBox = () => {
     user.username.toLowerCase().includes(searchItem.toLowerCase())
   );
 
-  const getProfileImage = (userId) => {
-    const profile = AllProfilesImage?.find(
-      (profile) => String(profile.user_id) === String(userId)
+  const getAllUsersWithProfileImages = async (users) => {
+    const response = await axios.get(
+      `http://localhost:5000/api/images/getallimage`,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("authtoken")}`,
+        },
+      }
     );
 
-    return profile?.profile_image?.trim()
-      ? profile.profile_image
-      : placeholderImage;
+    const pro = response.data.profiles;
+
+    const usersWithImages = users.map((user) => {
+      const profile = pro.find((p) => String(p.user_id) === String(user._id));
+      const profile_image = profile?.profile_image?.trim()
+        ? profile.profile_image
+        : placeholderImage;
+
+      return {
+        ...user,
+        profile_image,
+      };
+    });
+
+    return usersWithImages;
   };
+  
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Suppose `users` already fetched from some API
+        const data = await getAllUsersWithProfileImages(users);
+        setUsersWithImages(data);
+      } catch (err) {
+        console.error("Error fetching profile images", err);
+      }
+    };
+
+    fetchData();
+  }, [users]);
+  
 
   const fetchMessages = async (pageNum) => {
     if (!selectedUser && !hasMore) return;
 
     setIsLoading(true);
     try {
-      const selecteduserid = selectedUser?.id;
-      const response = await dispatch(
-        GetSpecificUserCahts(selecteduserid, pageNum, (data) => {})
+      const selecteduserid = selectedUser?._id;
+      const response = await axios.get(
+        `http://localhost:5000/api/chats/get-user-chat/${selecteduserid}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("authtoken")}`,
+          },
+        }
       );
-
-      if (response.length > 0) {
-        setAllMessages((prevMessages) => [...response, ...prevMessages]);
+      if (response.data.chats.length > 0) {
+        setAllMessages((prevMessages) => [
+          ...response.data.chats,
+          ...prevMessages,
+        ]);
         setPage(pageNum + 1);
       }
-      if (response.length < 20) {
+      if (response.data.chats.length < 20) {
         setHasMore(false);
       }
     } catch (error) {
@@ -378,7 +422,6 @@ const ChatBox = () => {
       timestamp: new Date().toISOString(),
       read_status: "0",
     };
-    console.log("Sending WebSocket Message:", payload);
     // Send message via WebSocket
     socket.send(JSON.stringify(payload));
 
@@ -387,17 +430,25 @@ const ChatBox = () => {
     setNewMessage("");
     setFile(null);
 
-    const selecteduserid = selectedUser?.id;
-
-    await dispatch(
-      messageSentSpecificUser(payload, async () => {
-        await dispatch(GetSpecificUserCahts(selecteduserid, page, (res) => {}));
-      })
-    )
-      .catch((error) => console.error(error))
-      .finally(() => setIsSending(false));
+    const selecteduserid = selectedUser?._id;
+    await axios.post(
+      `http://localhost:5000/api/chats/sending-chat/${selecteduserid}`,
+      payload,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("authtoken")}`,
+        },
+      }
+    );
+  //   await dispatch(
+  //     messageSentSpecificUser(payload, async () => {
+  //       await dispatch(GetSpecificUserCahts(selecteduserid, page, (res) => {}));
+  //     })
+  //   )
+  //     .catch((error) => console.error(error))
+  //     .finally(() => setIsSending(false));
   };
-
+   
   const handleKeyDown = async (event) => {
     if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault(); // Prevents new line in textarea
@@ -406,19 +457,12 @@ const ChatBox = () => {
   };
 
  
-  // emoji add hear button for user messages
   const onEmojiClick = (event, emojiObject) => {
     setNewMessage((prevInput) => prevInput + emojiObject.emoji);
   };
 
   //media send message hear
 
-  const filteredImage = selectedUser
-    ? AllProfilesImage.find(
-        (profile) => String(profile.user_id) === String(selectedUser.id)
-      )
-    : null;
-  const profileImage = filteredImage?.profile_image || placeholderImage;
 
   return (
     <Container>
@@ -428,11 +472,12 @@ const ChatBox = () => {
             selectUser={setSelectedUser}
             placeholderImage={placeholderImage}
             AllProfilesImage={AllProfilesImage}
+            usersWithImages={usersWithImages}
             TotalUsers={TotalUsers}
             filteredUsers={filteredUsers}
             searchItem={searchItem}
             handleInputChange={handleInputChange}
-            getProfileImage={getProfileImage}
+            // getProfileImage={getProfileImage}
             // getLastMessageForUser={getLastMessageForUser}
             userId={userId}
             hasMore={hasMore}
@@ -442,7 +487,7 @@ const ChatBox = () => {
           <ChatWindow
             selectedUser={selectedUser}
             placeholderImage={placeholderImage}
-            AllProfilesImage={AllProfilesImage}
+            // AllProfilesImage={AllProfilesImage}
             userId={userId}
             socket={socket}
             messages={messages}
@@ -452,8 +497,8 @@ const ChatBox = () => {
             isSending={isSending}
             chatBoxRef={chatBoxRef}
             setNewMessage={setNewMessage}
-            profileImage={profileImage}
-            filteredImage={filteredImage}
+            // profileImage={profileImage}
+            // filteredImage={filteredImage}
             editingMessageId={editingMessageId}
             contextMenu={contextMenu}
             setContextMenu={setContextMenu}

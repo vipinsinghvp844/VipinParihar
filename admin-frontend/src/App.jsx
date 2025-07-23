@@ -6,7 +6,7 @@ import {
   Routes,
   useLocation,
 } from "react-router-dom";
-import ChatBox from "./components/ChatBox.jsx";
+import ChatBox2 from "./components/ChatBox2.jsx";
 import { Container, Col } from "react-bootstrap";
 import "bootstrap-icons/font/bootstrap-icons.css";
 import "bootstrap/dist/css/bootstrap.min.css";
@@ -212,7 +212,7 @@ function App() {
                     element={<ManageDocument />}
                   />
                   <Route path="/documents" element={<EmDocuments />} />
-                  <Route path="/chat" element={<ChatBox />} />
+                  <Route path="/chat" element={<ChatBox2 />} />
                 </Routes>
               </Layout>
             </PersistGate>

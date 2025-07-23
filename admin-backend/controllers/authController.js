@@ -175,9 +175,9 @@ exports.getUserAll = async (req, res) => {
     if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
       return res.status(400).json({ message: "Invalid user ID" });
     }
-    if (role !== "admin" && role !== "hr") {
-      return res.status(403).json({ message: "Access denied" });
-    }
+    // if (role !== "admin" && role !== "hr") {
+    //   return res.status(403).json({ message: "Access denied" });
+    // }
 
     const skip = (parseInt(page) - 1) * parseInt(limit);
     const totalUsers = await User.countDocuments();

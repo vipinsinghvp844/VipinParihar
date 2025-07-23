@@ -9,13 +9,13 @@ function ChatSidebar({
   filteredUsers,
   searchItem,
   handleInputChange,
-  getProfileImage,
+  // getProfileImage,
   // getLastMessageForUser,
+  usersWithImages,
 }) {
- 
   const { userStatus } = useContext(WebSocketContext);
   const [active, setActive] = useState(false);
-    const { TotalNotifications, AllUnseenUserAndMessages } = useSelector(
+  const { TotalNotifications, AllUnseenUserAndMessages } = useSelector(
     ({ EmployeeDetailReducers }) => EmployeeDetailReducers
   );
 
@@ -31,20 +31,20 @@ function ChatSidebar({
           style={{ width: "100%", borderRadius: "15px" }}
         />
       </div>
-      <ListGroup style={{ height: "500px", overflowY: "auto", overflowX:"hidden" }}>
-        {filteredUsers.map((user) => {
+      <ListGroup
+        style={{ height: "500px", overflowY: "auto", overflowX: "hidden" }}
+      >
+        {usersWithImages.map((user) => {
           const unseenMessages =
             AllUnseenUserAndMessages?.[0]?.unread_messages?.find(
-              (msg) => String(msg.sender_id) === String(user.id) 
+              (msg) => String(msg.sender_id) === String(user.id)
             )?.unread_count || 0;
           const isOnline = userStatus[String(user.id)]?.status === "online";
-          // console.log(isOnline,"jhckjsdkjdhfkhds");
-          
 
           return (
             <ListGroup.Item
-              key={user.id}
-              onClick={() => selectUser(user)}
+              key={user._id}
+              onClick={() => selectUser(user._id)}
               style={{
                 cursor: "pointer",
                 display: "flex",
@@ -53,7 +53,7 @@ function ChatSidebar({
             >
               <div style={{ position: "relative" }}>
                 <img
-                  src={getProfileImage(user.id)}
+                  src={(user.profile_image)}
                   alt="Profile"
                   className="popup-profile-image"
                   style={{
@@ -89,7 +89,7 @@ function ChatSidebar({
                     fontSize: "0.8em",
                     padding: "4px 7px",
                     borderRadius: "50%",
-                   }}
+                  }}
                 >
                   {unseenMessages}
                 </span>

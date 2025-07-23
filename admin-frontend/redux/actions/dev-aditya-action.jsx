@@ -64,7 +64,7 @@ export const FetchUserProfileAction = (body) => async (dispatch) => {
       }
     );
 
-    if (profileResponse.status == 200) {
+    if (profileResponse?.status == 200) {
       dispatch(
         UserProfilePicReduser(profileResponse?.data?.profile?.profile_image)
       );
@@ -87,9 +87,9 @@ export const FetchAllUserProfileAction = () => async (dispatch) => {
       }
     );
 
-    if (profileResponse.status == 200) {
-      dispatch(AlluserProfileGetReduser(profileResponse.data)); 
-      return profileResponse.data;
+    if (profileResponse?.status == 200) {
+      dispatch(AlluserProfileGetReduser(profileResponse?.data?.data)); 
+      return profileResponse?.data;
     }
   } catch (error) {
     console.error("Error fetching user profile:", error);
