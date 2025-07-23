@@ -7,8 +7,27 @@ import axios from "axios";
 const ChatBox2 = () => { 
   const [selectedUser, setSelectedUser] = useState(null);
     const [profileImage, setProfileImage] = useState([]);
-
-
+    const [users, setUsers] = useState([]);
+    useEffect(() => {
+      const fetchUsers = async () => {
+        try {
+          const response = await axios.get(
+            `http://localhost:5000/api/auth/get-user`,
+            {
+              headers: {
+                Authorization: `Bearer ${localStorage.getItem("authtoken")}`,
+              },
+            }
+          );
+          setUsers(response.data.data);
+        } catch (error) {
+          console.error("failed to fetch users");
+        }
+      };
+      fetchUsers();
+    }, []);
+  
+  
    useEffect(() => {
       const fetchProfileImage = async () => {
         try {
@@ -47,10 +66,15 @@ const ChatBox2 = () => {
           <ChatSidebar2
             setSelectedUser={setSelectedUser}
             getProfileImage={getProfileImage}
+            users={users}
           />
         </Col>
         <Col md={9} className="mobilschatwindow">
-          <ChatWindow2 selectedUser={selectedUser} getProfileImage={getProfileImage} />
+          <ChatWindow2
+            selectedUser={selectedUser}
+            getProfileImage={getProfileImage}
+            users={users}
+          />
         </Col>
       </Row>
     </Container>

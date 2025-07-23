@@ -2,8 +2,10 @@ import axios from "axios";
 import EmojiPicker from "emoji-picker-react";
 import { useEffect, useRef, useState } from "react";
 import { Button, Col, Container, Form, Modal, Row } from "react-bootstrap";
+import { toast } from "react-toastify";
+import { Link, useNavigate } from "react-router-dom";
 
-const ChatWindow2 = ({ selectedUser, getProfileImage }) => {
+const ChatWindow2 = ({ selectedUser, getProfileImage, users }) => {
   const userId = localStorage.getItem("user_id");
   const chatBoxRef = useRef(null);
   const [messages, setMessages] = useState([]);
@@ -19,6 +21,8 @@ const ChatWindow2 = ({ selectedUser, getProfileImage }) => {
   const [showOptions, setShowOptions] = useState(false);
   const [selectMode, setSelectMode] = useState(false);
   const [selectedMessages, setSelectedMessages] = useState([]);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [selectedRecipients, setSelectedRecipients] = useState([]);
 
   // message three dot outside click hide menu
   useEffect(() => {
@@ -30,11 +34,11 @@ const ChatWindow2 = ({ selectedUser, getProfileImage }) => {
     document.addEventListener("click", handleClickOutside);
     return () => document.removeEventListener("click", handleClickOutside);
   }, []);
- //show option menu toggle
+  //show option menu toggle
   const toggleMenu = () => {
     setShowOptions(!showOptions);
-  }
-  // select message on click 
+  };
+  // select message on click
   const toggleSelectMessage = (messageId) => {
     setSelectedMessages((prevSelected) => {
       if (prevSelected.includes(messageId)) {
@@ -51,7 +55,7 @@ const ChatWindow2 = ({ selectedUser, getProfileImage }) => {
       behavior: "smooth",
     });
   }, [messages]);
-
+  //sender and receiver only message fetch by server
   useEffect(() => {
     const fetchMessages = async () => {
       if (selectedUser?._id) {
@@ -72,8 +76,8 @@ const ChatWindow2 = ({ selectedUser, getProfileImage }) => {
     };
     fetchMessages();
   }, [selectedUser]);
-  //select file
 
+  //select file
   const handleFileChange = (event) => {
     const selectedFile = event.target.files[0];
     if (!selectedFile) return;
@@ -83,7 +87,7 @@ const ChatWindow2 = ({ selectedUser, getProfileImage }) => {
     setFile(selectedFile);
     setShowModal(true);
   };
-
+  //message send and edit
   const handleSendMessage = async () => {
     if (!newMessage.trim() && file) return;
 
@@ -163,6 +167,7 @@ const ChatWindow2 = ({ selectedUser, getProfileImage }) => {
     );
   }
 
+  //single message delete
   const handleDeleteMessage = async (messageId) => {
     const confirmDelete = window.confirm(
       "Are you sure you want to delete this message?"
@@ -184,6 +189,66 @@ const ChatWindow2 = ({ selectedUser, getProfileImage }) => {
     }
   };
 
+  // all select delete message
+  const handleDeleteSelectedMessages = async () => {
+    const confirmDelete = window.confirm(
+      `Are you sure you want to delete ${selectedMessages.length} selected message(s)?`
+    );
+    if (!confirmDelete) return;
+
+    try {
+      await Promise.all(
+        selectedMessages.map((messageId) =>
+          axios.delete(
+            `http://localhost:5000/api/chats/delete-chat/${messageId}`,
+            {
+              headers: {
+                Authorization: `Bearer ${localStorage.getItem("authtoken")}`,
+              },
+            }
+          )
+        )
+      );
+
+      setMessages((prev) =>
+        prev.filter((msg) => !selectedMessages.includes(msg._id))
+      );
+
+      setSelectedMessages([]);
+      setSelectMode(false);
+      setShowOptions(false);
+    } catch (error) {
+      console.error("Failed to delete selected messages:", error);
+    }
+  };
+
+
+  // message share to other user on select
+
+  const handleShareMessages = () => {
+    // const msgsToSend = messages.filter((msg) =>
+    //   selectedMessages.includes(msg._id)
+    // );
+
+    // selectedRecipients.forEach((recipientId) => {
+    //   msgsToSend.forEach((msg) => {
+    //     socket.emit("sendMessage", {
+    //       sender_id: myId,
+    //       receiver_id: recipientId,
+    //       message: msg.message,
+    //       mediaType: msg.mediaType || "text",
+    //       image: msg.image || "",
+    //       timestamp: new Date(),
+    //     });
+    //   });
+    // });
+
+    // // Reset
+    // setShowShareModal(false);
+    // setSelectedRecipients([]);
+    // alert("Message shared!");
+  };
+  
   return (
     <Container
       className="d-flex flex-column border rounded"
@@ -208,6 +273,48 @@ const ChatWindow2 = ({ selectedUser, getProfileImage }) => {
         </Col>
 
         <Col className="d-flex justify-content-end">
+          {selectMode && selectedMessages.length > 0 && (
+            <>
+              <div
+                className="dropdown-item text-danger"
+                onClick={handleDeleteSelectedMessages}
+              >
+                <i class="bi bi-trash"></i>
+                {selectedMessages.length}
+              </div>
+
+              <div
+                className="dropdown-item"
+                onClick={() => {
+                  const textsToCopy = messages
+                    .filter((msg) => selectedMessages.includes(msg._id))
+                    .map((msg) => msg.message)
+                    .join("\n\n");
+                  if (textsToCopy) {
+                    navigator.clipboard
+                      .writeText(textsToCopy)
+                      .then(() =>
+                        toast.success("Selected messages copied to clipboard")
+                      )
+                      .catch(() => toast.error("Failed to copy messages"));
+                  } else {
+                    toast.info("No messages selected to copy.");
+                  }
+                }}
+              >
+                <i class="bi bi-copy"></i>
+              </div>
+            </>
+          )}
+          {selectMode && selectedMessages.length > 0 && (
+            <div
+              className="dropdown-item text-danger"
+              onClick={() => setShowShareModal(true)}
+            >
+              <i class="bi bi-share"></i>
+              {selectedMessages.length}
+            </div>
+          )}
           <i
             class="bi bi-three-dots-vertical"
             style={{ cursor: "pointer", zIndex: 100 }}
@@ -220,17 +327,14 @@ const ChatWindow2 = ({ selectedUser, getProfileImage }) => {
                 top: "30px",
                 right: "10px",
                 zIndex: 99,
-                minWidth: "150px",
+                minWidth: "160px",
               }}
             >
               <div
                 className="dropdown-item"
-                onClick={() => selectedMessages}
+                onClick={() => setSelectMode(!selectMode)}
               >
-                ✅ Select Messages
-              </div>
-              <div className="dropdown-item" onClick={() => alert("Copy All")}>
-                📋 Copy All
+                ✅ {selectMode ? "Cancel Selection" : "Select"}
               </div>
               <div className="dropdown-item" onClick={() => alert("Clear All")}>
                 🧹 Clear Chat
@@ -238,16 +342,67 @@ const ChatWindow2 = ({ selectedUser, getProfileImage }) => {
               <div className="dropdown-item" onClick={() => alert("Download")}>
                 ⬇️ Download Chat
               </div>
-              <div
-                className="dropdown-item"
-                onClick={() => alert("View Profile")}
-              >
-                👤 View Profile
+              <div className="dropdown-item">
+                <Link
+                  to={"/profile"}
+                  style={{ color: "#333", textDecoration: "none" }}
+                >
+                  👤 View Profile
+                </Link>
               </div>
             </div>
           )}
         </Col>
       </Row>
+      {showShareModal && (
+        <div className="modal-backdrop" style={{display:"flex", justifyContent:"center", alignItems:"center"}}>
+          <div
+            className="modal-content p-3 bg-white rounded shadow"
+            style={{ width: "300px" }}
+          >
+            <h5>Select Users to Share</h5>
+            <div
+              className="user-list"
+              style={{ maxHeight: "200px", overflowY: "auto" }}
+            >
+              {users
+                .filter((user) => user._id !== userId) // exclude self
+                .map((user) => (
+                  <div key={user._id} className="form-check">
+                    <input
+                      className="form-check-input"
+                      type="checkbox"
+                      value={user._id}
+                      checked={selectedRecipients.includes(user._id)}
+                      onChange={(e) => {
+                        const id = e.target.value;
+                        setSelectedRecipients((prev) =>
+                          prev.includes(id)
+                            ? prev.filter((uid) => uid !== id)
+                            : [...prev, id]
+                        );
+                      }}
+                    />
+                    <label className="form-check-label">{user.username}</label>
+                  </div>
+                ))}
+            </div>
+
+            <div className="d-flex justify-content-between mt-3">
+              <button
+                className="btn btn-secondary"
+                onClick={() => setShowShareModal(false)}
+              >
+                Cancel
+              </button>
+              <button className="btn btn-primary" onClick={handleShareMessages}>
+                Share
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Messages */}
       <div
         className="flex-grow-1 p-3 overflow-auto"
@@ -346,14 +501,21 @@ const ChatWindow2 = ({ selectedUser, getProfileImage }) => {
                             >
                               <i className="bi bi-trash3 me-1"></i>Delete
                             </div>
+                            <div className="text-light" onClick={() => {}}>
+                              <i className="bi bi-files me-1"></i>Copy
+                            </div>
                           </>
                         )}
                       </div>
                     )}
                   </div>
                   <div
-                    className={`message-item ${
-                      selectedMessages.includes(msg._id) ? "selected" : ""
+                    className={`p- rounded mb- position-relative ${
+                      isMe ? "bg-success text-white" : "bg-secondary text-white"
+                    } ${
+                      selectedMessages.includes(msg._id)
+                        ? "border border-primary border-3"
+                        : ""
                     }`}
                     onClick={() => {
                       if (selectMode) toggleSelectMessage(msg._id);

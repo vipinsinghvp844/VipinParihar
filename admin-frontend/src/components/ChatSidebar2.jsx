@@ -2,28 +2,8 @@ import axios from "axios";
 import { useEffect, useMemo, useState } from "react";
 import { ListGroup } from "react-bootstrap";
 
-const ChatSidebar2 = ({ setSelectedUser, getProfileImage }) => {
-  const [users, setUsers] = useState([]);
+const ChatSidebar2 = ({ setSelectedUser, getProfileImage, users }) => {
   const [searchItem, setSearchItem] = useState("");
-
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const response = await axios.get(
-          `http://localhost:5000/api/auth/get-user`,
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("authtoken")}`,
-            },
-          }
-        );
-        setUsers(response.data.data);
-      } catch (error) {
-        console.error("failed to fetch users");
-      }
-    };
-    fetchUsers();
-  }, []);
 
   //Search ke liye input
   const handleInputChange = (e) => {

@@ -56,6 +56,7 @@ import { ToastContainer } from "react-toastify";
 import { WebSocketProvider } from "./components/WebSocketContext.jsx";
 import AdminAddEmpLeave from "./components/AdminAddEmpLeave.jsx";
 import AddEmployee from "./components/AddEmployee";
+import ViewProfileInChats from "./components/viewProfileInChats.jsx";
 
 function App() {
   const [userRole, setUserRole] = useState(null);
@@ -148,12 +149,7 @@ function App() {
                     element={<EmployeeDashboard userId={userId} />}
                   />
                   <Route path="/shifts" element={<HrShift />} />
-                  <Route
-                    path="/leave-requests"
-                    element={
-                      <LeaveRequests/>
-                    }
-                  />
+                  <Route path="/leave-requests" element={<LeaveRequests />} />
                   <Route path="/leave-policies" element={<LeavePolicies />} />
                   <Route path="/leave-balance" element={<LeaveBalance />} />
                   <Route
@@ -213,6 +209,7 @@ function App() {
                   />
                   <Route path="/documents" element={<EmDocuments />} />
                   <Route path="/chat" element={<ChatBox2 />} />
+                  <Route path="/profile" element={<ViewProfileInChats />} />
                 </Routes>
               </Layout>
             </PersistGate>
