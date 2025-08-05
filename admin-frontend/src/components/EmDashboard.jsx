@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Col, Row, Tabs, Tab, Container, Card, Alert } from "react-bootstrap";
-import MarkAttendance from "./MarkAttendance";
+import MarkAttendance from "./MarkAttendance.jsx";
 import "./EmDashboard.css"; // Import custom CSS
 
 import { useDispatch } from "react-redux";

@@ -1,6 +1,7 @@
 # Node modules
 admin-frontend/node_modules/
 admin-backend/node_modules/
+admin-backend/Websocket/node_modules
 
 # Build files
 admin-frontend/build/

@@ -3,11 +3,39 @@ import ChatSidebar2 from "./ChatSidebar2";
 import ChatWindow2 from "./ChatWindow2";
 import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
+import { io } from "socket.io-client";
+import { useSocket } from "./WebSocketProvider";
+
 
 const ChatBox2 = () => { 
+  const socket = useSocket();
+  const [onlineUsers, setOnlineUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
     const [profileImage, setProfileImage] = useState([]);
-    const [users, setUsers] = useState([]);
+  const [users, setUsers] = useState([]);
+
+  useEffect(() => {
+    if (!socket) return;
+    socket.on("initial-online-users", (users) => {
+      setOnlineUsers(users);
+    });
+
+    socket.on("user-online", ({ userId }) => {
+      setOnlineUsers((prev) => [...new Set([...prev, userId])]);
+    });
+
+    socket.on("user-offline", ({ userId }) => {
+      setOnlineUsers((prev) => prev.filter((id) => id !== userId));
+    });
+
+    return () => {
+      socket.off("user-online");
+      socket.off("user-offline");
+    };
+  }, [socket]);
+
+
+
     useEffect(() => {
       const fetchUsers = async () => {
         try {
@@ -58,7 +86,9 @@ const ChatBox2 = () => {
     }, [profileImage]);
     const getProfileImage = (userId) => {
       return profileImageMap.get(String(userId)) || "/default-avatar.png";
-    };
+  };
+
+  
   return (
     <Container>
       <Row>
@@ -67,6 +97,7 @@ const ChatBox2 = () => {
             setSelectedUser={setSelectedUser}
             getProfileImage={getProfileImage}
             users={users}
+            onlineUsers={onlineUsers}
           />
         </Col>
         <Col md={9} className="mobilschatwindow">

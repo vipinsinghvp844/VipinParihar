@@ -1,9 +1,9 @@
 import React, {useEffect, useState} from 'react';
 import { Col, Container, Row, Card, Alert } from 'react-bootstrap';
-import TotalUsers from './TotalUsers';
-import TodayPresent from './TodayPresent';
-import TodayOnLeave from './TodayOnLeave';
-import TodayAbsent from './TodayAbsent';
+import TotalUsers from "./TotalUsers";
+import TodayPresent from "./TodayPresent";
+import TodayOnLeave from "./TodayOnLeave";
+import TodayAbsent from "./TodayAbsent";
 import './AdDashboard.css'; // Import custom CSS
 import { useDispatch } from 'react-redux';
 

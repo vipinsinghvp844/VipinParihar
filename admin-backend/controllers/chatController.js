@@ -86,18 +86,9 @@ exports.getChatUserToUser = async (req, res) => {
     .lean(); 
 
     for (let chat of chats) {
-      // const senderProfile = await userProfile.findOne({ user_id: chat.sender_id._id }, "profile_image");
-      // const receiverProfile = await userProfile.findOne({ user_id: chat.receiver_id._id }, "profile_image");
-
       chat.sender_username = chat.sender_id.username;
       chat.receiver_username = chat.receiver_id.username;
-      // chat.sender_profile_image = senderProfile?.profile_image || "https://devsite.digitalpractice.net/devsite/wp-content/uploads/2024/07/placeholder-image-hrm.png";
-      // chat.receiver_profile_image = receiverProfile?.profile_image || "https://devsite.digitalpractice.net/devsite/wp-content/uploads/2024/07/placeholder-image-hrm.png";
-
-      // Optional: cleanup populated objects
-      // delete chat.sender_id;
-      // delete chat.receiver_id;
-    }
+      }
 
     return res.status(200).json({
       message: "Chat fetched successfully",
@@ -112,6 +103,87 @@ exports.getChatUserToUser = async (req, res) => {
     });
   }
 };
+
+exports.getUserLastMessages = async (req, res) => {
+  try {
+   const userId = new mongoose.Types.ObjectId(req.user.id);
+
+    const lastMessages = await Chat.aggregate([
+      {
+        $match: {
+          $or: [
+            { sender_id: userId },
+            { receiver_id: userId },
+          ],
+          is_deleted: false,
+        },
+      },
+      {
+        $project: {
+          sender_id: 1,
+          receiver_id: 1,
+          message: 1,
+          media: 1,
+          createdAt: 1,
+          read_status: 1,
+          updated_at:1,
+          otherUser: {
+            $cond: [
+              { $eq: ["$sender_id", userId] },
+              "$receiver_id",
+              "$sender_id"
+            ]
+          }
+        }
+      },
+      {
+        $sort: { createdAt: -1, updated_at: -1 }
+      },
+      {
+        $group: {
+          _id: "$otherUser",
+          lastMessage: { $first: "$$ROOT" }
+        }
+      },
+      {
+        $lookup: {
+          from: "users", // collection name (check your DB)
+          localField: "_id",
+          foreignField: "_id",
+          as: "userInfo"
+        }
+      },
+      {
+        $unwind: "$userInfo"
+      },
+      {
+        $project: {
+          _id: 0,
+          userId: "$userInfo._id",
+
+          username: "$userInfo.username",
+          lastMessage: {
+            message: "$lastMessage.message",
+            media: "$lastMessage.media",
+            createdAt: "$lastMessage.createdAt",
+            updated_at: "$lastMessage.updated_at",
+            read_status:"$lastMessage.read_status",
+            sender_id: "$lastMessage.sender_id",
+            receiver_id: "$lastMessage.receiver_id"
+          }
+        }
+      },
+      {
+        $sort: { "lastMessage.createdAt": -1 }
+      }
+    ]);
+    return res.status(200).json({ users: lastMessages });
+  } catch (err) {
+    console.error("Failed to get last chat message", err);
+    return res.status(500).json({ message: "Server Error", error: err.message });
+  }
+}
+
 
 exports.selfChatEdit = async (req, res) => {
   try {
@@ -138,7 +210,7 @@ exports.selfChatEdit = async (req, res) => {
 
     // Update message
     message.message = newMessage;
-    message.updatedAt = new Date();
+    message.updated_at = new Date();
 
     await message.save();
 
@@ -152,7 +224,6 @@ exports.selfChatEdit = async (req, res) => {
     return res.status(500).json({ message: "Server Error", error: err.message });
   }
 };
-
 
 
 exports.softDeleteMessageSelf = async (req, res) => {
@@ -200,6 +271,37 @@ exports.softDeleteMessageSelf = async (req, res) => {
     return res.status(500).json({ message: "Server Error", error: err.message });
   }
 };
+
+exports.messageReadUpdate = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { senderId } = req.params;
+
+    if (!userId || !senderId) {
+      return res.status(400).json({ message: "Invalid sender or user" });
+    }
+
+    const updated = await Chat.updateMany(
+      {
+        sender_id: senderId,
+        receiver_id: userId,
+        read_status: 0,
+      },
+      {
+        $set: { read_status: 1 },
+      }
+    );
+
+    return res.status(200).json({
+      message: "Messages marked as read",
+      modifiedCount: updated.modifiedCount,
+    });
+  } catch (err) {
+    console.error("Failed to update read status", err);
+    return res.status(500).json({ message: "Server Error", error: err.message });
+  }
+};
+
 
 
 

@@ -3,7 +3,10 @@ import EmojiPicker from "emoji-picker-react";
 import { useEffect, useRef, useState } from "react";
 import { Button, Col, Container, Form, Modal, Row } from "react-bootstrap";
 import { toast } from "react-toastify";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
+import { io } from "socket.io-client";
+
+const socket = io("http://localhost:3000");
 
 const ChatWindow2 = ({ selectedUser, getProfileImage, users }) => {
   const userId = localStorage.getItem("user_id");
@@ -23,6 +26,129 @@ const ChatWindow2 = ({ selectedUser, getProfileImage, users }) => {
   const [selectedMessages, setSelectedMessages] = useState([]);
   const [showShareModal, setShowShareModal] = useState(false);
   const [selectedRecipients, setSelectedRecipients] = useState([]);
+    const [lastMessages, setLastMessages] = useState([]);
+  
+  useEffect(() => {
+    const handleNewMessage = (newMessage) => {
+      setMessages((prevMessages) => [...prevMessages, newMessage]);
+
+      const senderId =
+        typeof newMessage.sender_id === "object"
+          ? newMessage.sender_id._id
+          : newMessage.sender_id;
+
+      if (
+        selectedUser &&
+        senderId === selectedUser._id &&
+        newMessage.receiver_id === userId
+      ) {
+        clearTimeout(window.readTimer);
+        window.readTimer = setTimeout(() => {
+          markMessageAsRead(senderId);
+        }, 500); 
+      }
+    };
+
+    socket.on("msgFromServer", handleNewMessage);
+
+    return () => {
+      socket.off("msgFromServer", handleNewMessage);
+      clearTimeout(window.readTimer);
+    };
+  }, [selectedUser]);
+
+
+  
+useEffect(() => {
+  // socket.on("msgFromServer", (newMessage) => {
+  //   setMessages((prev) => [...prev, newMessage]); // Update message list
+  // });
+  socket.on("editMsgFromServer", (editedMessage) => {
+    setMessages((prev) =>
+      prev.map((msg) =>
+        msg._id === editedMessage._id
+          ? {
+              ...msg,
+              message: editedMessage.message,
+              updatedAt: editedMessage.updatedAt,
+            }
+          : msg
+      )
+    );
+  });
+
+  socket.on("deleteMsgFromServer", (deletedMessage) => {
+    setMessages((prev) => prev.filter((msg) => msg._id !== deletedMessage._id));
+  });
+  socket.on("readMsgFromServer", ({ userId, forUser }) => {
+    // Mark all messages from that user as read
+    setMessages((prev) =>
+      prev.map((msg) =>
+        msg.sender_id._id === forUser && msg.receiver_id === userId
+          ? { ...msg, read_status: 1 }
+          : msg
+      )
+    );
+  });
+
+  return () => {
+    socket.off("msgFromServer");
+    socket.off("editMsgFromServer");
+    socket.off("deleteMsgFromServer");
+     socket.off("readMsgFromServer");
+  };
+}, []);
+
+ useEffect(() => {
+   if (selectedUser?._id) {
+     const updateReadStatus = async () => {
+       try {
+         const response = await axios.put(
+           `http://localhost:5000/api/chats/mark-read-message/${selectedUser?._id}`,
+           {},
+           {
+             headers: {
+               Authorization: `Bearer ${localStorage.getItem("authtoken")}`,
+             },
+           }
+         );
+         setLastMessages(response.data.users);
+         socket.emit("readMsg", { userId, forUser: selectedUser._id });
+       } catch (error) {
+         console.error("Error updating read status:", error);
+       }
+     };
+
+     updateReadStatus();
+   }
+ }, [selectedUser]); 
+  
+  const markMessageAsRead = async (senderId) => {
+    try {
+      const response = await axios.put(
+        `http://localhost:5000/api/chats/mark-read-message/${senderId}`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("authtoken")}`,
+          },
+        }
+      );
+
+      // ✅ Optional: Update seen status in UI
+      setLastMessages(response.data.users);
+
+      // ✅ Notify sender over socket
+      socket.emit("readMsg", {
+        userId: userId,
+        forUser: senderId,
+      });
+    } catch (error) {
+      console.error("Error updating read status:", error);
+    }
+  };
+
+
 
   // message three dot outside click hide menu
   useEffect(() => {
@@ -76,7 +202,6 @@ const ChatWindow2 = ({ selectedUser, getProfileImage, users }) => {
     };
     fetchMessages();
   }, [selectedUser]);
-
   //select file
   const handleFileChange = (event) => {
     const selectedFile = event.target.files[0];
@@ -88,8 +213,80 @@ const ChatWindow2 = ({ selectedUser, getProfileImage, users }) => {
     setShowModal(true);
   };
   //message send and edit
+  // const handleSendMessage = async () => {
+  //   if (!newMessage.trim() && !file) return;
+
+  //   if (editMode && editMessageId) {
+  //     try {
+  //       await axios.put(
+  //         `http://localhost:5000/api/chats/edit-message/${editMessageId}`,
+  //         { newMessage: newMessage },
+  //         {
+  //           headers: {
+  //             Authorization: `Bearer ${localStorage.getItem("authtoken")}`,
+  //           },
+  //         }
+  //       );
+  //       setMessages((prev) =>
+  //         prev.map((msg) =>
+  //           msg._id === editMessageId ? { ...msg, message: newMessage } : msg
+  //         )
+  //       );
+  //       setNewMessage("");
+  //       setEditMode(false);
+  //       setEditMessageId(null);
+  //     } catch (error) {
+  //       console.error("failed to edit message", error);
+  //     }
+  //     return;
+  //   }
+  //   const formData = new FormData();
+  //   formData.append("message", newMessage);
+  //   if (file) {
+  //     formData.append("media", file);
+  //     formData.append(
+  //       "media_type",
+  //       file.type.startsWith("image") ? "image" : "video"
+  //     );
+  //   }
+  //   formData.append("read_status", "0");
+  //   setIsSending(true);
+  //   try {
+  //     await axios.post(
+  //       `http://localhost:5000/api/chats/sending-chat/${selectedUser._id}`,
+  //       formData,
+  //       {
+  //         headers: {
+  //           Authorization: `Bearer ${localStorage.getItem("authtoken")}`,
+  //         },
+  //       }
+  //     );
+  //     setMessages((prev) => [
+  //       ...prev,
+  //       {
+  //         sender_id: { _id: userId },
+  //         message: newMessage,
+  //         createdAt: new Date().toISOString(),
+  //         updatedAt: new Date().toISOString(),
+  //         read_status: "0",
+  //         media: file
+  //           ? {
+  //               base64: URL.createObjectURL(file),
+  //               type: file.type.startsWith("image") ? "image" : "video",
+  //             }
+  //           : { base64: "", type: "none" },
+  //       },
+  //     ]);
+  //     setNewMessage("");
+  //     setFile(null);
+  //     setIsSending(false);
+  //   } catch (error) {
+  //     console.error("Failed to send message", error);
+  //   }
+  // };
+
   const handleSendMessage = async () => {
-    if (!newMessage.trim() && file) return;
+    if (!newMessage.trim() && !file) return;
 
     if (editMode && editMessageId) {
       try {
@@ -102,11 +299,17 @@ const ChatWindow2 = ({ selectedUser, getProfileImage, users }) => {
             },
           }
         );
+        const updatedMsg = {
+          _id: editMessageId,
+          message: newMessage,
+          updatedAt: new Date().toISOString(),
+        }
         setMessages((prev) =>
           prev.map((msg) =>
             msg._id === editMessageId ? { ...msg, message: newMessage } : msg
           )
         );
+        socket.emit("editMsg", updatedMsg);
         setNewMessage("");
         setEditMode(false);
         setEditMessageId(null);
@@ -115,6 +318,7 @@ const ChatWindow2 = ({ selectedUser, getProfileImage, users }) => {
       }
       return;
     }
+
     const formData = new FormData();
     formData.append("message", newMessage);
     if (file) {
@@ -126,6 +330,7 @@ const ChatWindow2 = ({ selectedUser, getProfileImage, users }) => {
     }
     formData.append("read_status", "0");
     setIsSending(true);
+
     try {
       await axios.post(
         `http://localhost:5000/api/chats/sending-chat/${selectedUser._id}`,
@@ -136,28 +341,35 @@ const ChatWindow2 = ({ selectedUser, getProfileImage, users }) => {
           },
         }
       );
-      setMessages((prev) => [
-        ...prev,
-        {
-          sender_id: { _id: userId },
-          message: newMessage,
-          updatedAt: new Date().toISOString(),
-          read_status: "0",
-          media: file
-            ? {
-                base64: URL.createObjectURL(file),
-                type: file.type.startsWith("image") ? "image" : "video",
-              }
-            : { base64: "", type: "none" },
-        },
-      ]);
+
+      const newMsgObj = {
+        sender_id: { _id: userId },
+        receiver_id: selectedUser._id,
+        message: newMessage,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        read_status: 0,
+        media: file
+          ? {
+              base64: URL.createObjectURL(file),
+              type: file.type.startsWith("image") ? "image" : "video",
+            }
+          : { base64: "", type: "none" },
+      };
+
+      setMessages((prev) => [...prev, newMsgObj]);
+
+      socket.emit("msg", newMsgObj);
+
       setNewMessage("");
       setFile(null);
       setIsSending(false);
     } catch (error) {
       console.error("Failed to send message", error);
+      setIsSending(false);
     }
   };
+
 
   if (!selectedUser) {
     return (
@@ -184,6 +396,7 @@ const ChatWindow2 = ({ selectedUser, getProfileImage, users }) => {
       );
       const updatedMessages = messages.filter((msg) => msg._id !== messageId);
       setMessages(updatedMessages);
+      socket.emit("deleteMsg", { _id: messageId });
     } catch (error) {
       console.error("failed to edit message", error);
     }
@@ -222,14 +435,12 @@ const ChatWindow2 = ({ selectedUser, getProfileImage, users }) => {
     }
   };
 
-
   // message share to other user on select
 
   const handleShareMessages = () => {
     // const msgsToSend = messages.filter((msg) =>
     //   selectedMessages.includes(msg._id)
     // );
-
     // selectedRecipients.forEach((recipientId) => {
     //   msgsToSend.forEach((msg) => {
     //     socket.emit("sendMessage", {
@@ -242,12 +453,38 @@ const ChatWindow2 = ({ selectedUser, getProfileImage, users }) => {
     //     });
     //   });
     // });
-
     // // Reset
     // setShowShareModal(false);
     // setSelectedRecipients([]);
     // alert("Message shared!");
   };
+
+  // clear all chats
+  const handleClearChat = async () => {
+    const confirmClear = window.confirm(
+      "Are you sure you want to clear this entire chat?"
+    );
+    if (!confirmClear) return;
+
+    try {
+      await axios.delete(
+        `http://localhost:5000/api/chats/delete-chat/${selectedUser._id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("authtoken")}`,
+          },
+        }
+      );
+      setMessages([]); // Clear messages from UI
+      toast.success("Chat cleared successfully.");
+    } catch (error) {
+      console.error("Failed to clear chat:", error);
+      toast.error("Failed to clear chat.");
+    }
+  };
+
+  //seen message and update read status
+
   
   return (
     <Container
@@ -275,12 +512,12 @@ const ChatWindow2 = ({ selectedUser, getProfileImage, users }) => {
         <Col className="d-flex justify-content-end">
           {selectMode && selectedMessages.length > 0 && (
             <>
+              <span>{selectedMessages.length}</span>
               <div
                 className="dropdown-item text-danger"
                 onClick={handleDeleteSelectedMessages}
               >
-                <i class="bi bi-trash"></i>
-                {selectedMessages.length}
+                <i className="bi bi-trash"></i>
               </div>
 
               <div
@@ -302,7 +539,7 @@ const ChatWindow2 = ({ selectedUser, getProfileImage, users }) => {
                   }
                 }}
               >
-                <i class="bi bi-copy"></i>
+                <i className="bi bi-copy"></i>
               </div>
             </>
           )}
@@ -311,12 +548,11 @@ const ChatWindow2 = ({ selectedUser, getProfileImage, users }) => {
               className="dropdown-item text-danger"
               onClick={() => setShowShareModal(true)}
             >
-              <i class="bi bi-share"></i>
-              {selectedMessages.length}
+              <i className="bi bi-share"></i>
             </div>
           )}
           <i
-            class="bi bi-three-dots-vertical"
+            className="bi bi-three-dots-vertical"
             style={{ cursor: "pointer", zIndex: 100 }}
             onClick={toggleMenu}
           />
@@ -336,7 +572,7 @@ const ChatWindow2 = ({ selectedUser, getProfileImage, users }) => {
               >
                 ✅ {selectMode ? "Cancel Selection" : "Select"}
               </div>
-              <div className="dropdown-item" onClick={() => alert("Clear All")}>
+              <div className="dropdown-item" onClick={handleClearChat}>
                 🧹 Clear Chat
               </div>
               <div className="dropdown-item" onClick={() => alert("Download")}>
@@ -355,7 +591,14 @@ const ChatWindow2 = ({ selectedUser, getProfileImage, users }) => {
         </Col>
       </Row>
       {showShareModal && (
-        <div className="modal-backdrop" style={{display:"flex", justifyContent:"center", alignItems:"center"}}>
+        <div
+          className="modal-backdrop"
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
           <div
             className="modal-content p-3 bg-white rounded shadow"
             style={{ width: "300px" }}
@@ -411,6 +654,20 @@ const ChatWindow2 = ({ selectedUser, getProfileImage, users }) => {
       >
         {messages.map((msg, idx) => {
           const isMe = String(msg.sender_id?._id) === String(userId);
+          const updateTime = new Date(msg.updated_at).toLocaleTimeString(
+            "en-US",
+            {
+              hour: "2-digit",
+              minute: "2-digit",
+            }
+          );
+          const deleteTime = new Date(msg.deleted_at).toLocaleTimeString(
+            "en-US",
+            {
+              hour: "2-digit",
+              minute: "2-digit",
+            }
+          );
           const messageTime = new Date(msg.createdAt).toLocaleTimeString(
             "en-US",
             {
@@ -512,16 +769,25 @@ const ChatWindow2 = ({ selectedUser, getProfileImage, users }) => {
                   <div
                     className={`p- rounded mb- position-relative ${
                       isMe ? "bg-success text-white" : "bg-secondary text-white"
-                    } ${
-                      selectedMessages.includes(msg._id)
-                        ? "border border-primary border-3"
-                        : ""
                     }`}
                     onClick={() => {
                       if (selectMode) toggleSelectMessage(msg._id);
                     }}
                     style={{ cursor: selectMode ? "pointer" : "default" }}
                   >
+                    {selectMode && (
+                      <input
+                        type="checkbox"
+                        checked={selectedMessages.includes(msg._id)}
+                        onChange={(e) => e.stopPropagation()} // prevent double trigger
+                        style={{
+                          position: "absolute",
+                          top: "px",
+                          left: "",
+                          zIndex: 2,
+                        }}
+                      />
+                    )}
                     {msg.deleted_by_sender || msg.deleted_by_receiver ? (
                       <i style={{ fontStyle: "italic", color: "#ccc" }}>
                         {(() => {
@@ -571,26 +837,37 @@ const ChatWindow2 = ({ selectedUser, getProfileImage, users }) => {
                         <span style={{ wordBreak: "break-word" }}>
                           {msg.message}
                         </span>
-                        {msg.updatedAt && (
-                          <span
-                            style={{ fontSize: "0.7rem", marginLeft: "5px" }}
-                          >
-                            (edited)
-                          </span>
-                        )}
                       </>
                     )}
                   </div>
-
                   <div
-                    className="text-end mt-1"
-                    style={{ fontSize: "0.75rem" }}
+                    className="d-flex justify-content-end align-items-center mt-1"
+                    style={{
+                      fontSize: "0.75rem",
+                      gap: "8px",
+                      flexWrap: "wrap",
+                    }}
                   >
-                    {messageTime}
-                    {isMe && msg.read_status === "1" ? (
-                      <i className="bi bi-check2-all text-danger ms-1"></i>
-                    ) : isMe && msg.read_status === "0" ? (
-                      <i className="bi bi-check ms-1"></i>
+                    {msg.updated_at && !msg.deleted_at && (
+                      <span style={{ fontSize: "0.7rem" }}>
+                        Updated at: {updateTime}
+                      </span>
+                    )}
+
+                    {msg.deleted_at && (
+                      <span style={{ fontSize: "0.7rem" }}>
+                        Deleted at: {deleteTime}
+                      </span>
+                    )}
+
+                    {!msg.updated_at && !msg.deleted_at && (
+                      <span style={{ fontSize: "0.7rem" }}>{messageTime}</span>
+                    )}
+
+                    {isMe && msg.read_status === 1 ? (
+                      <i className="bi bi-check2-all text-danger"></i>
+                    ) : isMe && msg.read_status === 0 ? (
+                      <i className="bi bi-check"></i>
                     ) : null}
                   </div>
                 </div>
@@ -599,10 +876,18 @@ const ChatWindow2 = ({ selectedUser, getProfileImage, users }) => {
           );
         })}
       </div>
-      <div>
+      <div style={{ position: "relative" }}>
         <Form className="mt-3 d-flex align-items-center">
+          {/* Emoji Picker */}
           {showEmojiPicker && (
-            <div style={{ position: "absolute", bottom: "-30px" }}>
+            <div
+              style={{
+                position: "absolute",
+                bottom: "50px",
+                left: "10px",
+                zIndex: 9999,
+              }}
+            >
               <EmojiPicker
                 onEmojiClick={(emojiObject) =>
                   setNewMessage((prev) => prev + emojiObject.emoji)
@@ -610,6 +895,8 @@ const ChatWindow2 = ({ selectedUser, getProfileImage, users }) => {
               />
             </div>
           )}
+
+          {/* Emoji Toggle Button */}
           <button
             type="button"
             onClick={() => setShowEmojiPicker(!showEmojiPicker)}
@@ -619,17 +906,19 @@ const ChatWindow2 = ({ selectedUser, getProfileImage, users }) => {
               fontSize: "1.5rem",
               cursor: "pointer",
               marginRight: "1px",
-              position: "absolute",
+              zIndex: 10,
             }}
           >
             😊
           </button>
+
+          {/* File Upload */}
           <i
             className="bi bi-paperclip"
             onClick={() => document.getElementById("fileInputmedia").click()}
             style={{
               cursor: "pointer",
-              marginLeft: "50px",
+              marginLeft: "10px",
               fontSize: "1.5rem",
             }}
           />
@@ -640,14 +929,16 @@ const ChatWindow2 = ({ selectedUser, getProfileImage, users }) => {
             accept="image/*,video/*"
             style={{ display: "none" }}
           />
-          <Form.Group controlId="newMessage" className="w-100 ms-5">
+
+          {/* Message Input */}
+          <Form.Group controlId="newMessage" className="w-100 ms-3">
             <Form.Control
               type="text"
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
               placeholder={
-                editMode ? "Edit your message..." : "Type Your message..."
+                editMode ? "Edit your message..." : "Type your message..."
               }
             />
             {editMode && (
@@ -665,14 +956,16 @@ const ChatWindow2 = ({ selectedUser, getProfileImage, users }) => {
               </Button>
             )}
           </Form.Group>
+
+          {/* Send Button */}
           <i
             className="bi bi-send mx-2 p-2 bg-danger rounded"
             style={{ cursor: "pointer" }}
             onClick={handleSendMessage}
-            disabled={isSending}
           ></i>
         </Form>
       </div>
+
       <div>
         <Modal show={showModal} onHide={() => setShowModal(false)} centered>
           <Modal.Header>
@@ -719,7 +1012,7 @@ const ChatWindow2 = ({ selectedUser, getProfileImage, users }) => {
             </Button>
           </Modal.Footer>
         </Modal>
-        <div show={showModal} onHide={() => setShowModal(false)} centered></div>
+        {/* <div show={showModal} onHide={() => setShowModal(false)} centered></div> */}
       </div>
     </Container>
   );

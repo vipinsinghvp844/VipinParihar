@@ -53,10 +53,13 @@ import { Provider } from "react-redux";
 import { persistor, store } from "../redux/Store.jsx";
 import { PersistGate } from "redux-persist/integration/react";
 import { ToastContainer } from "react-toastify";
-import { WebSocketProvider } from "./components/WebSocketContext.jsx";
+// import { WebSocketProvider } from "./components/WebSocketContext.jsx";
+import { WebSocketProvider } from "./components/WebSocketProvider";
 import AdminAddEmpLeave from "./components/AdminAddEmpLeave.jsx";
 import AddEmployee from "./components/AddEmployee";
 import ViewProfileInChats from "./components/viewProfileInChats.jsx";
+import Layout from "./components/LayOut.jsx";
+import ProtectedApp from "./components/ProtectedApp.jsx";
 
 function App() {
   const [userRole, setUserRole] = useState(null);
@@ -68,8 +71,8 @@ function App() {
   };
   const handleLogout = () => {
     setUserRole(null);
-    setUserId(null); 
-    localStorage.removeItem("user"); 
+    setUserId(null);
+    localStorage.removeItem("user");
   };
 
   useEffect(() => {
@@ -81,7 +84,7 @@ function App() {
         const role = userData?.user?.role;
 
         if (role) {
-          setUserRole(role); 
+          setUserRole(role);
         } else {
           console.error("Roles is not defined or not an array or is empty");
         }
@@ -95,127 +98,38 @@ function App() {
     }
   }, []);
 
-  // Create a component to handle the layout
-  const Layout = ({ children }) => {
-    const location = useLocation();
-    const isLoginPage = location.pathname === "/";
-    const isPasswordChangePage =
-      location.pathname === "/request-password-reset";
-
-    return (
-      <Container fluid className="p-0">
-        {!isLoginPage && !isPasswordChangePage && (
-          <>
-            <main className="main">
-              {userRole && (
-                <Sidebar userRole={userRole} />
-              )}
-              <div className="right-main-box">
-                <Header
-                  userRole={userRole}
-                  onLogout={handleLogout}
-                />
-                {children}
-              </div>
-            </main>
-          </>
-        )}
-        {(isLoginPage || isPasswordChangePage) && children}
-      </Container>
-    );
-  };
-
   return (
     <>
-      <WebSocketProvider>
-        <Router>
-          <Provider store={store}>
-            <PersistGate loading={null} persistor={persistor}>
-              <Layout>
-                <Routes>
-                  <Route path="/" element={<Login onLogin={handleLogin} />} />
-                  <Route
-                    path="/request-password-reset"
-                    element={<RequestPasswordReset />}
-                  />
-                  <Route
-                    path="/reset-password/:key/:login"
-                    element={<ResetPassword />}
-                  />
-                  <Route path="/admin-dashboard" element={<AdDashboard />} />
-                  <Route path="/hr-dashboard" element={<HrDashboard />} />
-                  <Route
-                    path="/employee-dashboard"
-                    element={<EmployeeDashboard userId={userId} />}
-                  />
-                  <Route path="/shifts" element={<HrShift />} />
-                  <Route path="/leave-requests" element={<LeaveRequests />} />
-                  <Route path="/leave-policies" element={<LeavePolicies />} />
-                  <Route path="/leave-balance" element={<LeaveBalance />} />
-                  <Route
-                    path="/leave-entitlements"
-                    element={<LeaveEntitlements />}
-                  />
-                  <Route path="/all-employee" element={<AllEmpDetails />} />
-                  <Route path="/edit-employee/:id" element={<EditEmployee />} />
-                  <Route path="/add-attendance" element={<AddAttendance />} />
-                  {/* <Route path="/add-employee" element={<AddNewEmployee />} /> */}
-                  <Route path="/add-employee" element={<AddEmployee />} />
+      <Provider store={store}>
+        <PersistGate loading={null} persistor={persistor}>
+          <Router>
+            <Layout userRole={userRole} handleLogout={handleLogout}>
+              <Routes>
+                <Route path="/" element={<Login onLogin={handleLogin} />} />
+                <Route
+                  path="/request-password-reset"
+                  element={<RequestPasswordReset />}
+                />
+                <Route
+                  path="/reset-password/:key/:login"
+                  element={<ResetPassword />}
+                />
+                <Route
+                  path="/*"
+                  element={
+                    <ProtectedApp
+                      userRole={userRole}
+                      userId={userId}
+                      onLogout={handleLogout}
+                    />
+                  }
+                />
+              </Routes>
+            </Layout>
+          </Router>
+        </PersistGate>
+      </Provider>
 
-                  <Route path="/manage-holidays" element={<ManageHolidays />} />
-                  <Route path="/notification" element={<Notification />} />
-                  <Route
-                    path="/employee-attendance/:userId"
-                    element={<EmployeeAttDetails />}
-                  />
-
-                  <Route path="/my-leaves" element={<EmployeeViewLeave />} />
-                  <Route path="/apply-leave" element={<ApplyLeave />} />
-                  <Route path="/holidays" element={<Holidays />} />
-                  <Route path="/our-shift" element={<OurShift />} />
-                  <Route path="/birthday" element={<BirthdayMessages />} />
-                  <Route path="/attendance-csv" element={<AttendanceCsv />} />
-                  <Route
-                    path="/manage-your-account"
-                    element={<ManageYourAccount />}
-                  />
-                  <Route
-                    path="/today-attendance"
-                    element={<OverviewAttendance />}
-                  />
-                  <Route
-                    path="/manage-attendance"
-                    element={<ManageAttendance />}
-                  />
-                  <Route path="/my-attendance" element={<AttendanceRecord />} />
-                  <Route path="/Calender" element={<DateCalendar />} />
-                  {/* <Route
-                    path="/add-employee-details"
-                    element={<AddEmployeeDetails />}
-                  /> */}
-                  <Route
-                    path="/personal-detail/:id"
-                    element={<EmployeePerDetail />}
-                  />
-                  <Route path="/offer-letter" element={<OfferLetter />} />
-                  <Route
-                    path="/experience-letter"
-                    element={<ExperienceLetter />}
-                  />
-                  <Route path="/noc-letter" element={<NocLetter />} />
-                  <Route
-                    path="/manage-documents"
-                    element={<ManageDocument />}
-                  />
-                  <Route path="/documents" element={<EmDocuments />} />
-                  <Route path="/chat" element={<ChatBox2 />} />
-                  <Route path="/profile" element={<ViewProfileInChats />} />
-                </Routes>
-              </Layout>
-            </PersistGate>
-          </Provider>
-        </Router>
-      </WebSocketProvider>
       <ToastContainer />
     </>
   );
