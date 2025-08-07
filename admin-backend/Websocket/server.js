@@ -11,16 +11,20 @@ const io = new Server(httpServer, {
 
 const onlineUsers = new Map(); //userId => socket.id 
 
-
-
 io.on("connection", (socket) => {
   const userId = socket.handshake.query.userId;
-socket.emit("initial-online-users", Array.from(onlineUsers.keys()));
-  if (userId) {
-    console.log("User connected:", userId);
-    onlineUsers.set(userId, socket.id);
-    io.emit("user-online", { userId }); // Broadcast
+   console.log("Incoming connection with userId:", userId);
 
+   if (userId) {
+    console.log("User connected:", userId);
+    onlineUsers.set(userId, socket.id); // Pehle user ko map me daalein
+
+    // Ab correct online list bhejein
+    socket.emit("initial-online-users", Array.from(onlineUsers.keys()));
+
+    io.emit("user-online", { userId }); // Broadcast
+  }
+    
     // In case frontend missed emitting "user-online"
     socket.on("user-online", (uid) => {
       onlineUsers.set(uid, socket.id);
@@ -36,13 +40,20 @@ socket.emit("initial-online-users", Array.from(onlineUsers.keys()));
       onlineUsers.delete(userId);
       io.emit("user-offline", { userId });
     });
-  }
+  
 
   // send message and received message 
   socket.on("msg", (data) => {
     // broadcast to all except sender
     socket.broadcast.emit("msgFromServer", data);
   });
+  // Last message in sidebar
+
+  socket.on("msg", (data) => {
+
+    socket.broadcast.emit("lstMsgFromServer", data);
+  })
+
   // edit message 
   socket.on("editMsg", (data) => {
     socket.broadcast.emit("editMsgFromServer", data);

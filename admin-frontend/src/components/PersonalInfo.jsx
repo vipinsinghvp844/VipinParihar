@@ -3,30 +3,29 @@ import axios from "axios";
 import { Button, Form, Row, Col, Container } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 import { GetTotalUserActionByUserId } from "../../redux/actions/EmployeeDetailsAction";
-import Spinner from "./LoaderSpiner";
+import Spinner from "./common/LoaderSpiner";
 
 const PersonalInfo = () => {
-// console.log(TotalUsersId,"============================================");
+  // console.log(TotalUsersId,"============================================");
 
   const [userInfo, setUserInfo] = useState("");
   const [isEditing, setIsEditing] = useState(false);
   const userId = localStorage.getItem("user_id");
   const [loader, setLoader] = useState(false);
   const dispatch = useDispatch();
-  
+
   useEffect(() => {
     const fetchUserInfo = async () => {
       try {
         const response = await dispatch(GetTotalUserActionByUserId());
         setUserInfo(response.data);
-        
       } catch (error) {
         console.error("Error fetching user info:", error);
       }
     };
 
     fetchUserInfo();
-      setLoader(false);
+    setLoader(false);
   }, [userId]);
 
   const handleInputChange = (e) => {
@@ -38,7 +37,7 @@ const PersonalInfo = () => {
     setLoader(true);
     const response = userInfo;
     setUserInfo(response);
-    
+
     if (response) {
       setIsEditing(false);
     }

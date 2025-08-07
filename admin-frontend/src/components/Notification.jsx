@@ -7,7 +7,7 @@ import {
 } from "../../redux/actions/EmployeeDetailsAction";
 import { useDispatch, useSelector } from "react-redux";
 import "./Notification.css";
-import LoaderSpiner from "./LoaderSpiner";
+import LoaderSpiner from "./common/LoaderSpiner";
 
 const Notification = () => {
   const [notification, setNotification] = useState([]);
@@ -17,7 +17,7 @@ const Notification = () => {
   const [hasMore, setHasMore] = useState(true);
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { TotalNotifications, } = useSelector(
+  const { TotalNotifications } = useSelector(
     ({ EmployeeDetailReducers }) => EmployeeDetailReducers
   );
 
@@ -29,11 +29,10 @@ const Notification = () => {
     if (!hasMore) return;
     setIsLoading(true);
     try {
-      const response = await dispatch(fetchNotificationsAll(pageNumber, (data) => {
-        
-      } ));
+      const response = await dispatch(
+        fetchNotificationsAll(pageNumber, (data) => {})
+      );
       const newNotifications = Array.isArray(response) ? response : [];
-
 
       if (newNotifications.length < 20) setHasMore(false);
 
@@ -58,16 +57,16 @@ const Notification = () => {
     senderId,
     startDate
   ) => {
-    
     try {
       setLoading(true);
       await dispatch(
         changeReadUnreadAction(notificationId, async () => {
           setLoading(false);
-          await dispatch(fetchNotificationsAll(page, (res) => {
-            // console.log(res,"respmse");
-            
-          }));
+          await dispatch(
+            fetchNotificationsAll(page, (res) => {
+              // console.log(res,"respmse");
+            })
+          );
         })
       );
 

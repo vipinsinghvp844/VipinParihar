@@ -1,16 +1,24 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Container, Row, Col, Nav, Spinner, Modal, Button } from "react-bootstrap";
+import {
+  Container,
+  Row,
+  Col,
+  Nav,
+  Spinner,
+  Modal,
+  Button,
+} from "react-bootstrap";
 import { FaCamera } from "react-icons/fa";
 import Cropper from "react-easy-crop";
 import PersonalInfo from "./PersonalInfo";
-import ChangePassword from "./ChangePassword";
+import ChangePassword from "./auth/ChangePassword";
 import "./ManageYourAccount.css";
 import { useDispatch, useSelector } from "react-redux";
 import {
   ProfilePicUpdateAction,
   ProfilePicUploadAction,
 } from "../../redux/actions/dev-aditya-action";
-import getCroppedImg from "./cropImageHelper.jsx";
+import getCroppedImg from "./utils/cropImageHelper.jsx";
 import axios from "axios";
 
 const ManageYourAccount = () => {
@@ -19,7 +27,7 @@ const ManageYourAccount = () => {
     ({ AllReducers }) => AllReducers
   );
   const dispatch = useDispatch();
- const placeholderImage = import.meta.env.VITE_PLACEHOLDER_IMAGE;
+  const placeholderImage = import.meta.env.VITE_PLACEHOLDER_IMAGE;
   const [activeTab, setActiveTab] = useState("Personal Info");
   const user_name = localStorage.getItem("user_name");
 
@@ -28,11 +36,11 @@ const ManageYourAccount = () => {
   const [selectedImage, setSelectedImage] = useState(null);
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
-   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
 
-   const onCropComplete = useCallback((croppedArea, croppedAreaPixels) => {
-     setCroppedAreaPixels(croppedAreaPixels);
-   }, []);
+  const onCropComplete = useCallback((croppedArea, croppedAreaPixels) => {
+    setCroppedAreaPixels(croppedAreaPixels);
+  }, []);
 
   const handleFileChange = async (event) => {
     const file = event.target.files[0];
@@ -43,15 +51,15 @@ const ManageYourAccount = () => {
       reader.onloadend = () => {
         setSelectedImage(reader.result);
         setShowCropModal(true);
-      }
+      };
     }
   };
-  const handleCropConfirm = async (event) => { 
+  const handleCropConfirm = async (event) => {
     setLoading(true);
     const base64Image = await getCroppedImg(selectedImage, croppedAreaPixels);
     setShowCropModal(false);
     if (!loginUserProfile) {
-      const response = await dispatch(ProfilePicUploadAction(base64Image));      
+      const response = await dispatch(ProfilePicUploadAction(base64Image));
       if (response?.data) {
         setLoading(false);
       }
@@ -63,7 +71,7 @@ const ManageYourAccount = () => {
         setLoading(false);
       }
     }
-  }
+  };
 
   const renderTabContent = () => {
     switch (activeTab) {

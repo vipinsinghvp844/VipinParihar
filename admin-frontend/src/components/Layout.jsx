@@ -1,8 +1,8 @@
 // components/Layout.jsx
 import React from "react";
 import { Container } from "react-bootstrap";
-import Sidebar from "./Sidebar";
-import Header from "./Header";
+import Sidebar from "./common/Sidebar";
+import Header from "./common/Header";
 import { useLocation } from "react-router-dom";
 
 const Layout = ({ children, userRole, handleLogout }) => {

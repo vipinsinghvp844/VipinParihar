@@ -8,6 +8,8 @@ const {
   getUserCount,
   getSingleUser,
   changePassword,
+  getLastSeenMap,
+  logoutUser,
 } = require("../controllers/authController");
 const router = express.Router();
 const protect = require("../middleware/auth");
@@ -20,5 +22,7 @@ router.get("/get-user", protect, getUserAll);
 router.get("/user-count", protect, getUserCount);
 router.get("/get-user-by-id/:id", protect, getSingleUser);
 router.post("/change-password", protect, changePassword);
+router.get("/last-seen-map", protect, getLastSeenMap);
+router.post("/logout", protect, logoutUser);
 
 module.exports = router;

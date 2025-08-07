@@ -122,6 +122,11 @@ exports.loginUser = async (req, res) => {
     if (!isMatch)
       return res.status(400).json({ message: "Invalid Credentials" });
 
+    // ✅ Update isOnline and lastSeen on login
+    user.isOnline = true;
+    user.lastSeen = new Date(); // optional: set current time
+    await user.save();
+
     const token = genrateToken(user);
 
     res.json({
@@ -131,12 +136,31 @@ exports.loginUser = async (req, res) => {
         username: user.username,
         email: user.email,
         role: user.role,
+        isOnline: user.isOnline,
+        lastSeen: user.lastSeen
       },
     });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 };
+
+exports.logoutUser = async (req, res) => {
+  try {
+    const userId = req.user.id; 
+
+    await User.findByIdAndUpdate(userId, {
+      isOnline: false,
+      lastSeen: new Date()
+    });
+
+    return res.status(200).json({ message: "User logged out successfully" });
+  } catch (err) {
+    console.error("Logout failed:", err);
+    return res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
+
 
 // Delete User
 exports.deleteUser = async (req, res) => {
@@ -242,5 +266,30 @@ exports.getSingleUser = async (req, res) => {
   } catch (err) {
     console.log("Fetch User Error:", err);
     res.status(500).json({ message: "Failed to fetch user" });
+  }
+};
+
+exports.getLastSeenMap = async (req, res) => {
+  try {
+    const users = await User.find({}, "_id lastSeen isOnline").lean();
+
+    const lastSeenMap = {};
+    users.forEach(user => {
+      lastSeenMap[user._id] = {
+        isOnline: user.isOnline,
+        lastSeen: user.lastSeen
+      };
+    });
+
+    return res.status(200).json({
+      message: "Last seen map fetched successfully",
+      lastSeenMap
+    });
+  } catch (err) {
+    console.error("Failed to fetch last seen map:", err);
+    return res.status(500).json({
+      message: "Server Error",
+      error: err.message
+    });
   }
 };

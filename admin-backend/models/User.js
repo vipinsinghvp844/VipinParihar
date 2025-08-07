@@ -28,7 +28,14 @@ const userSchema = new mongoose.Schema({
     type: String,
     enum: ['admin', 'hr', 'employee']
   },
-
+  lastSeen: {
+    type: Date,
+    default: null
+  },
+  isOnline: {
+    type: Boolean,
+    default: false
+  },
   //  Personal Info
   personalInfo: {
     firstname: {
