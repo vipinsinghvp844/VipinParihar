@@ -1,7 +1,16 @@
 import React from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
-import { TextField, Button, Grid } from "@mui/material";
+import {
+  TextField,
+  Button,
+  Grid,
+  Typography,
+  Box,
+  Paper,
+  Divider,
+} from "@mui/material";
+import "./BasicInfoForm.css"; // 🧩 Shared styles
 
 const validationSchema = Yup.object({
   username: Yup.string().required("Username is required"),
@@ -11,7 +20,7 @@ const validationSchema = Yup.object({
     .required("Password is required"),
   role: Yup.string().required("Role is required"),
   firstname: Yup.string().required("First name is required"),
-  lastname:Yup.string(),
+  lastname: Yup.string(),
   mobile: Yup.string()
     .matches(/^\d{10}$/, "Mobile must be 10 digits")
     .required("Mobile number is required"),
@@ -50,121 +59,128 @@ const BasicInfoForm = ({ onNext, initialData = {} }) => {
   });
 
   return (
-    <form onSubmit={formik.handleSubmit}>
-      <Grid container spacing={2}>
-        <Grid item xs={12} sm={6}>
-          <TextField
-            fullWidth
-            label="Username"
-            name="username"
-            value={formik.values.username}
-            onChange={formik.handleChange}
-            onBlur={formik.handleBlur}
-            error={formik.touched.username && Boolean(formik.errors.username)}
-            helperText={formik.touched.username && formik.errors.username}
-          />
+    <Paper elevation={3} className="form-container">
+      <form onSubmit={formik.handleSubmit}>
+        <Typography variant="h5" className="form-title">
+          Basic Information
+        </Typography>
+
+        <Divider sx={{ mb: 3 }} />
+
+        <Grid container spacing={2}>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              fullWidth
+              label="Username"
+              name="username"
+              {...formik.getFieldProps("username")}
+              error={formik.touched.username && Boolean(formik.errors.username)}
+              helperText={formik.touched.username && formik.errors.username}
+              className="input-field"
+            />
+          </Grid>
+
+          <Grid item xs={12} sm={6}>
+            <TextField
+              fullWidth
+              label="Email"
+              name="email"
+              {...formik.getFieldProps("email")}
+              error={formik.touched.email && Boolean(formik.errors.email)}
+              helperText={formik.touched.email && formik.errors.email}
+              className="input-field"
+            />
+          </Grid>
+
+          <Grid item xs={12} sm={6}>
+            <TextField
+              fullWidth
+              label="Password"
+              name="password"
+              type="password"
+              {...formik.getFieldProps("password")}
+              error={formik.touched.password && Boolean(formik.errors.password)}
+              helperText={formik.touched.password && formik.errors.password}
+              className="input-field"
+            />
+          </Grid>
+
+          <Grid item xs={12} sm={6}>
+            <TextField
+              fullWidth
+              label="Role"
+              name="role"
+              {...formik.getFieldProps("role")}
+              error={formik.touched.role && Boolean(formik.errors.role)}
+              helperText={formik.touched.role && formik.errors.role}
+              className="input-field"
+            />
+          </Grid>
+
+          <Grid item xs={12} sm={6}>
+            <TextField
+              fullWidth
+              label="First Name"
+              name="firstname"
+              {...formik.getFieldProps("firstname")}
+              error={
+                formik.touched.firstname && Boolean(formik.errors.firstname)
+              }
+              helperText={formik.touched.firstname && formik.errors.firstname}
+              className="input-field"
+            />
+          </Grid>
+
+          <Grid item xs={12} sm={6}>
+            <TextField
+              fullWidth
+              label="Last Name"
+              name="lastname"
+              {...formik.getFieldProps("lastname")}
+              error={formik.touched.lastname && Boolean(formik.errors.lastname)}
+              helperText={formik.touched.lastname && formik.errors.lastname}
+              className="input-field"
+            />
+          </Grid>
+
+          <Grid item xs={12} sm={6}>
+            <TextField
+              fullWidth
+              label="Mobile"
+              name="mobile"
+              {...formik.getFieldProps("mobile")}
+              error={formik.touched.mobile && Boolean(formik.errors.mobile)}
+              helperText={formik.touched.mobile && formik.errors.mobile}
+              className="input-field"
+            />
+          </Grid>
+
+          <Grid item xs={12} sm={6}>
+            <TextField
+              fullWidth
+              type="date"
+              label="DOB"
+              name="dob"
+              InputLabelProps={{ shrink: true }}
+              {...formik.getFieldProps("dob")}
+              error={formik.touched.dob && Boolean(formik.errors.dob)}
+              helperText={formik.touched.dob && formik.errors.dob}
+              className="input-field"
+            />
+          </Grid>
         </Grid>
 
-        <Grid item xs={12} sm={6}>
-          <TextField
-            fullWidth
-            label="Email"
-            name="email"
-            value={formik.values.email}
-            onChange={formik.handleChange}
-            onBlur={formik.handleBlur}
-            error={formik.touched.email && Boolean(formik.errors.email)}
-            helperText={formik.touched.email && formik.errors.email}
-          />
-        </Grid>
-
-        <Grid item xs={12} sm={6}>
-          <TextField
-            fullWidth
-            label="Password"
-            name="password"
-            type="password"
-            value={formik.values.password}
-            onChange={formik.handleChange}
-            onBlur={formik.handleBlur}
-            error={formik.touched.password && Boolean(formik.errors.password)}
-            helperText={formik.touched.password && formik.errors.password}
-          />
-        </Grid>
-
-        <Grid item xs={12} sm={6}>
-          <TextField
-            fullWidth
-            label="Role"
-            name="role"
-            value={formik.values.role}
-            onChange={formik.handleChange}
-            onBlur={formik.handleBlur}
-            error={formik.touched.role && Boolean(formik.errors.role)}
-            helperText={formik.touched.role && formik.errors.role}
-          />
-        </Grid>
-
-        <Grid item xs={12} sm={6}>
-          <TextField
-            fullWidth
-            label="First Name"
-            name="firstname"
-            value={formik.values.firstname}
-            onChange={formik.handleChange}
-            onBlur={formik.handleBlur}
-            error={formik.touched.firstname && Boolean(formik.errors.firstname)}
-            helperText={formik.touched.firstname && formik.errors.firstname}
-          />
-        </Grid>
-        <Grid item xs={12} sm={6}>
-          <TextField
-            fullWidth
-            label="Last Name"
-            name="lastname"
-            value={formik.values.lastname}
-            onChange={formik.handleChange}
-            onBlur={formik.handleBlur}
-            error={formik.touched.lastname && Boolean(formik.errors.lastname)}
-            helperText={formik.touched.lastname && formik.errors.lastname}
-          />
-        </Grid>
-
-        <Grid item xs={12} sm={6}>
-          <TextField
-            fullWidth
-            label="Mobile"
-            name="mobile"
-            value={formik.values.mobile}
-            onChange={formik.handleChange}
-            onBlur={formik.handleBlur}
-            error={formik.touched.mobile && Boolean(formik.errors.mobile)}
-            helperText={formik.touched.mobile && formik.errors.mobile}
-          />
-        </Grid>
-
-        <Grid item xs={12} sm={6}>
-          <TextField
-            fullWidth
-            type="date"
-            label="DOB"
-            name="dob"
-            InputLabelProps={{ shrink: true }}
-            value={formik.values.dob}
-            onChange={formik.handleChange}
-            onBlur={formik.handleBlur}
-            error={formik.touched.dob && Boolean(formik.errors.dob)}
-            helperText={formik.touched.dob && formik.errors.dob}
-          />
-        </Grid>
-
-        <Grid item xs={12}>
-          <Button type="submit" variant="contained">
+        <Box mt={4} display="flex" justifyContent="flex-end">
+          <Button
+            type="submit"
+            variant="contained"
+            className="form-button submit-button"
+          >
             Next
           </Button>
-        </Grid>
-      </Grid>
-    </form>
+        </Box>
+      </form>
+    </Paper>
   );
 };
 

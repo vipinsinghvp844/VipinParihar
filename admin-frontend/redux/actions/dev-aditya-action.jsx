@@ -27,18 +27,17 @@ export const LoginUserAction = (obj12) => async (dispatch) => {
 
     if (res.status === 200) {
       const user = res.data;
-
-      const userRole =
-        user.user.role && user.user.role[0] ? user.user.role[0] : null;
+      const userRole = user.user.role || null;
 
       if (userRole) {
         localStorage.setItem("password", obj12.password);
         localStorage.setItem("authtoken", user.token);
         localStorage.setItem("user_email", user.user.email);
         localStorage.setItem("user_name", user.user.username);
-        localStorage.setItem("role", user.user.role);
+        localStorage.setItem("role", userRole);
         localStorage.setItem("user", JSON.stringify(user));
         localStorage.setItem("user_id", user.user.id);
+
         dispatch(LoginTokenReduser(res?.data));
         dispatch(LoginUserReduser(res.data.user));
         return user;
@@ -51,6 +50,7 @@ export const LoginUserAction = (obj12) => async (dispatch) => {
     throw error;
   }
 };
+
 
 export const FetchUserProfileAction = (body) => async (dispatch) => {
   try {

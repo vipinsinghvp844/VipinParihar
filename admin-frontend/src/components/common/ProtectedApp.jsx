@@ -4,21 +4,18 @@ import {
   BrowserRouter as Router,
   Route,
   Routes,
-  useLocation,
+  Navigate,
 } from "react-router-dom";
 import ChatBox2 from "../chat/ChatBox2.jsx";
-// import { Container, Col } from "react-bootstrap";
 import "bootstrap-icons/font/bootstrap-icons.css";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "react-toastify/dist/ReactToastify.css";
-// import Header from "./Header";
 import AdDashboard from "../dashboard/AdDashboard.jsx";
 import HrDashboard from "../dashboard/HrDashboard.jsx";
 import HrShift from "../holidays/HrShift.jsx";
 import LeaveRequests from "../leave/LeaveRequests.jsx";
 import LeaveEntitlements from "../leave/LeaveEntitlements.jsx";
 import AllEmpDetails from "../employee/AllEmpDetails.jsx";
-import AddNewEmployee from "../employee/AddNewEmployee.jsx";
 import AddAttendance from "../attendance/AddAttendance.jsx";
 import ManageHolidays from "../holidays/HrManageHolidays.jsx";
 import LeavePolicies from "../holidays/HrLeavePolicies.jsx";
@@ -28,10 +25,6 @@ import EmployeeViewLeave from "../leave/EmployeeViewLeave.jsx";
 import ApplyLeave from "../leave/EmApplyLeave.jsx";
 import Holidays from "../holidays/EmHolidays.jsx";
 import OurShift from "../OurShift.jsx";
-import Login from "../auth/Login.jsx";
-import RequestPasswordReset from "../auth/RequestPasswordReset.jsx";
-import ResetPassword from "../auth/ResetPassword.jsx";
-// import Sidebar from "./Sidebar";
 import EditEmployee from "../employee/EditEmployee.jsx";
 import LeaveBalance from "../leave/LeaveBalance.jsx";
 import Notification from "../Notification.jsx";
@@ -42,7 +35,6 @@ import OverviewAttendance from "../attendance/OverviewAttendance.jsx";
 import ManageAttendance from "../attendance/ManageAttendance.jsx";
 import AttendanceRecord from "../employee/AttendanceRecord.jsx";
 import DateCalendar from "../DateCalendar.jsx";
-import AddEmployeeDetails from "../employee/AddEmployeeDetails.jsx";
 import EmployeePerDetail from "../EmployeePerDetail.jsx";
 import OfferLetter from "../OfferLetter.jsx";
 import ManageDocument from "../ManageDocument.jsx";
@@ -50,12 +42,22 @@ import ExperienceLetter from "../ExperienceLetter.jsx";
 import NocLetter from "../NocLetter.jsx";
 import EmDocuments from "../employee/EmDocuments.jsx";
 import { WebSocketProvider } from "../WebSocketProvider.jsx";
-import AdminAddEmpLeave from "../employee/AdminAddEmpLeave.jsx";
 import AddEmployee from "../employee/AddEmployee.jsx";
 import ViewProfileInChats from "../viewProfileInChats.jsx";
+import AdminAddEmpLeave from "../employee/AdminAddEmpLeave.jsx";
 
-function ProtectedApp({ userRole, userId, onLogout }) {
-  // const location = useLocation();
+function ProtectedApp({   onLogout, user }) {
+  // console.log("Role loaded from localStorage:", userRole, "ID:", userId, user, "Userrrrr");
+  
+  // const ROle = user?.user?.role;
+  // const Id = user?.user?.id;
+  // console.log(Id);
+  const userId = localStorage.getItem("user_id");
+  const userRole = localStorage.getItem("role");
+
+  if (!userRole || !userId) {
+    return <Navigate to="/" replace />;
+  }
 
   return (
     <WebSocketProvider>
@@ -108,6 +110,7 @@ function ProtectedApp({ userRole, userId, onLogout }) {
         <Route path="/documents" element={<EmDocuments />} />
         <Route path="/chat" element={<ChatBox2 />} />
         <Route path="/profile" element={<ViewProfileInChats />} />
+        <Route path="/add-employee-leaves" element={<AdminAddEmpLeave/>} />
       </Routes>
       {/* </Layout> */}
     </WebSocketProvider>

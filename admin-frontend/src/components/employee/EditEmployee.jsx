@@ -1,6 +1,15 @@
 import React, { useState, useEffect } from "react";
-import { Modal, Button, Form, Alert, Container, Row, Col } from "react-bootstrap";
+import {
+  Modal,
+  Button,
+  Form,
+  Alert,
+  Container,
+  Row,
+  Col,
+} from "react-bootstrap";
 import axios from "axios";
+import "../../commonDashboard.css"; // ✅ Common CSS import
 
 const EditEmployee = ({ employeeId, show, handleClose }) => {
   const [employee, setEmployee] = useState({
@@ -12,7 +21,7 @@ const EditEmployee = ({ employeeId, show, handleClose }) => {
     mobile: "",
     role: "",
     address: "",
-    user_state:"",
+    user_state: "",
   });
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
@@ -49,11 +58,11 @@ const EditEmployee = ({ employeeId, show, handleClose }) => {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     const [objectName, key] = name.split(".");
-    setEmployee((prev)=>({
+    setEmployee((prev) => ({
       ...prev,
       [objectName]: {
         ...prev[objectName],
-        [key]:value,
+        [key]: value,
       },
     }));
   };
@@ -80,34 +89,36 @@ const EditEmployee = ({ employeeId, show, handleClose }) => {
 
   return (
     <Modal show={show} onHide={handleClose} centered>
-      <Modal.Header closeButton>
-        <Modal.Title>Edit Employee Details</Modal.Title>
+      <Modal.Header closeButton className="common-modal-header">
+        <Modal.Title className="common-title">
+          Edit Employee Details
+        </Modal.Title>
       </Modal.Header>
-      <Modal.Body>
+      <Modal.Body className="common-form">
         {errorMessage && <Alert variant="danger">{errorMessage}</Alert>}
         {successMessage && <Alert variant="success">{successMessage}</Alert>}
         <Form onSubmit={handleSubmit}>
           <Container>
             <Row>
               <Col xs={12} md={6}>
-                <Form.Group controlId="formFirstName">
+                <Form.Group controlId="formFirstName" className="mb-3">
                   <Form.Label>First Name</Form.Label>
                   <Form.Control
                     type="text"
                     name="personalInfo.firstname"
-                    value={employee?.personalInfo?.firstname}
+                    value={employee?.personalInfo?.firstname || ""}
                     onChange={handleInputChange}
                     required
                   />
                 </Form.Group>
               </Col>
               <Col xs={12} md={6}>
-                <Form.Group controlId="formLastName">
+                <Form.Group controlId="formLastName" className="mb-3">
                   <Form.Label>Last Name</Form.Label>
                   <Form.Control
                     type="text"
                     name="personalInfo.lastname"
-                    value={employee?.personalInfo?.lastname}
+                    value={employee?.personalInfo?.lastname || ""}
                     onChange={handleInputChange}
                     required
                   />
@@ -116,7 +127,7 @@ const EditEmployee = ({ employeeId, show, handleClose }) => {
             </Row>
             <Row>
               <Col xs={12} md={6}>
-                <Form.Group controlId="formEmail">
+                <Form.Group controlId="formEmail" className="mb-3">
                   <Form.Label>Email</Form.Label>
                   <Form.Control
                     type="email"
@@ -128,7 +139,7 @@ const EditEmployee = ({ employeeId, show, handleClose }) => {
                 </Form.Group>
               </Col>
               <Col xs={12} md={6}>
-                <Form.Group controlId="formUsername">
+                <Form.Group controlId="formUsername" className="mb-3">
                   <Form.Label>Username</Form.Label>
                   <Form.Control
                     type="text"
@@ -142,19 +153,19 @@ const EditEmployee = ({ employeeId, show, handleClose }) => {
             </Row>
             <Row>
               <Col xs={12} md={6}>
-                <Form.Group controlId="formMobile">
+                <Form.Group controlId="formMobile" className="mb-3">
                   <Form.Label>Mobile</Form.Label>
                   <Form.Control
                     type="text"
                     name="personalInfo.mobile"
-                    value={employee?.personalInfo?.mobile}
+                    value={employee?.personalInfo?.mobile || ""}
                     onChange={handleInputChange}
                     required
                   />
                 </Form.Group>
               </Col>
               <Col xs={12} md={6}>
-                <Form.Group controlId="formRole">
+                <Form.Group controlId="formRole" className="mb-3">
                   <Form.Label>Role</Form.Label>
                   <Form.Control
                     type="text"
@@ -168,26 +179,25 @@ const EditEmployee = ({ employeeId, show, handleClose }) => {
             </Row>
             <Row>
               <Col xs={6}>
-                <Form.Group controlId="formdob">
+                <Form.Group controlId="formdob" className="mb-3">
                   <Form.Label>Date of Birth</Form.Label>
                   <Form.Control
                     type="date"
-                    rows={3}
                     name="personalInfo.dob"
-                    value={employee?.personalInfo?.dob}
+                    value={employee?.personalInfo?.dob || ""}
                     onChange={handleInputChange}
                     required
                   />
                 </Form.Group>
               </Col>
               <Col xs={6}>
-                <Form.Group controlId="formAddress">
+                <Form.Group controlId="formAddress" className="mb-3">
                   <Form.Label>Address</Form.Label>
                   <Form.Control
                     as="textarea"
-                    rows={3}
+                    rows={2}
                     name="additionalInfoDetail.address"
-                    value={employee?.additionalInfoDetail?.address}
+                    value={employee?.additionalInfoDetail?.address || ""}
                     onChange={handleInputChange}
                     required
                   />
@@ -196,11 +206,10 @@ const EditEmployee = ({ employeeId, show, handleClose }) => {
             </Row>
             <Row>
               <Col xs={6}>
-                <Form.Group controlId="formAddress">
+                <Form.Group controlId="formUserState" className="mb-3">
                   <Form.Label>User State</Form.Label>
                   <Form.Control
                     type="text"
-                    rows={3}
                     name="user_state"
                     value={employee.user_state}
                     onChange={handleInputChange}
@@ -210,7 +219,11 @@ const EditEmployee = ({ employeeId, show, handleClose }) => {
               </Col>
             </Row>
           </Container>
-          <Button variant="primary" type="submit" className="mt-3 w-100">
+          <Button
+            variant="primary"
+            type="submit"
+            className="mt-3 w-100 common-submit-btn"
+          >
             Update
           </Button>
         </Form>

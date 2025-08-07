@@ -1,0 +1,43 @@
+.form-container {
+  padding: 32px;
+  border-radius: 12px;
+  background-color: #fafafa;
+  margin: 20px auto;
+  max-width: 800px;
+}
+
+.form-title {
+  font-weight: 600;
+  margin-bottom: 10px;
+  color: #333;
+}
+
+.optional-tag {
+  font-size: 14px;
+  font-weight: 400;
+  color: #777;
+}
+
+.input-field {
+  background-color: #fff;
+}
+
+.form-button {
+  min-width: 120px;
+  font-weight: 500;
+  text-transform: none;
+}
+
+.back-button {
+  border-color: #666;
+  color: #444;
+}
+
+.submit-button {
+  background-color: #1976d2;
+  color: white;
+}
+
+.submit-button:hover {
+  background-color: #115293;
+}

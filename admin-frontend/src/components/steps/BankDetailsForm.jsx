@@ -1,18 +1,15 @@
 import React from "react";
 import { useFormik } from "formik";
-import * as Yup from "yup";
-import { TextField, Button, Grid, Typography, Box } from "@mui/material";
-
-// const validationSchema = Yup.object({
-//   bankName: Yup.string().required("Bank name is required"),
-//   accountNumber: Yup.string()
-//     .matches(/^\d+$/, "Account number must be digits only")
-//     .required("Account number is required"),
-//   IFSC: Yup.string()
-//     .matches(/^[A-Z]{4}0[A-Z0-9]{6}$/, "Invalid IFSC code")
-//     .required("IFSC is required"),
-//   bankBranch: Yup.string().required("Bank branch is required"),
-// });
+import {
+  TextField,
+  Button,
+  Grid,
+  Typography,
+  Box,
+  Paper,
+  Divider,
+} from "@mui/material";
+import "./BankDetailsForm.css"; // 🔗 Link to custom CSS
 
 export default function BankDetailsForm({ initialData = {}, onNext, onBack }) {
   const formik = useFormik({
@@ -23,7 +20,6 @@ export default function BankDetailsForm({ initialData = {}, onNext, onBack }) {
       bankBranch: initialData.bankBranch || "",
     },
     enableReinitialize: true,
-    // validationSchema,
     onSubmit: (values) => {
       const payload = {
         bankDetails: {
@@ -38,20 +34,25 @@ export default function BankDetailsForm({ initialData = {}, onNext, onBack }) {
   });
 
   return (
-    <form onSubmit={formik.handleSubmit}>
-      <Box sx={{ p: 2 }}>
-        <Typography variant="h6" gutterBottom>
+    <Paper elevation={3} className="form-container">
+      <form onSubmit={formik.handleSubmit}>
+        <Typography variant="h5" className="form-title">
           Bank Details
         </Typography>
+
+        <Divider sx={{ mb: 3 }} />
+
         <Grid container spacing={2}>
           <Grid item xs={12} sm={6}>
             <TextField
               fullWidth
               label="Bank Name"
               name="bankName"
+              variant="outlined"
               {...formik.getFieldProps("bankName")}
               error={formik.touched.bankName && Boolean(formik.errors.bankName)}
               helperText={formik.touched.bankName && formik.errors.bankName}
+              className="input-field"
             />
           </Grid>
           <Grid item xs={12} sm={6}>
@@ -59,6 +60,7 @@ export default function BankDetailsForm({ initialData = {}, onNext, onBack }) {
               fullWidth
               label="Account Number"
               name="accountNumber"
+              variant="outlined"
               {...formik.getFieldProps("accountNumber")}
               error={
                 formik.touched.accountNumber &&
@@ -67,6 +69,7 @@ export default function BankDetailsForm({ initialData = {}, onNext, onBack }) {
               helperText={
                 formik.touched.accountNumber && formik.errors.accountNumber
               }
+              className="input-field"
             />
           </Grid>
           <Grid item xs={12} sm={6}>
@@ -74,9 +77,11 @@ export default function BankDetailsForm({ initialData = {}, onNext, onBack }) {
               fullWidth
               label="IFSC Code"
               name="IFSC"
+              variant="outlined"
               {...formik.getFieldProps("IFSC")}
               error={formik.touched.IFSC && Boolean(formik.errors.IFSC)}
               helperText={formik.touched.IFSC && formik.errors.IFSC}
+              className="input-field"
             />
           </Grid>
           <Grid item xs={12} sm={6}>
@@ -84,24 +89,34 @@ export default function BankDetailsForm({ initialData = {}, onNext, onBack }) {
               fullWidth
               label="Bank Branch"
               name="bankBranch"
+              variant="outlined"
               {...formik.getFieldProps("bankBranch")}
               error={
                 formik.touched.bankBranch && Boolean(formik.errors.bankBranch)
               }
               helperText={formik.touched.bankBranch && formik.errors.bankBranch}
+              className="input-field"
             />
           </Grid>
         </Grid>
 
-        <Box mt={3} display="flex" justifyContent="space-between">
-          <Button variant="outlined" onClick={onBack}>
+        <Box mt={4} display="flex" justifyContent="space-between">
+          <Button
+            variant="outlined"
+            onClick={onBack}
+            className="form-button back-button"
+          >
             Back
           </Button>
-          <Button variant="contained" type="submit">
+          <Button
+            variant="contained"
+            type="submit"
+            className="form-button submit-button"
+          >
             Next
           </Button>
         </Box>
-      </Box>
-    </form>
+      </form>
+    </Paper>
   );
 }

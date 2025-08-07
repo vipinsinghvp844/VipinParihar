@@ -14,6 +14,7 @@ import AdditionalInfoForm from "../steps/AdditionalInfoForm";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { Col, Container, Row } from "react-bootstrap";
+import "../../CommonDashboard.css";
 
 // Define step labels
 const steps = [
@@ -98,7 +99,7 @@ function AddEmployee() {
             initialData={{ ...(formData.employmentInfo || {}) }}
           />
         );
-
+        
       case 2:
         return (
           <BankDetailsForm
@@ -122,27 +123,24 @@ function AddEmployee() {
 
   return (
     <>
-      <Container className="add-new-employee">
-        <Row className="mb-4">
+      <Container className="add-employee-container">
+        <Row className="mb-4 align-items-center">
           <Col md={1}>
             <i
-              className="bi bi-arrow-left-circle"
+              className="bi bi-arrow-left-circle back-icon"
               onClick={() => window.history.back()}
-              style={{
-                cursor: "pointer",
-                fontSize: "32px",
-                color: "#343a40",
-              }}
             ></i>
           </Col>
           <Col md={10}>
-            <h3 className="mt-2">Register New Employee </h3>
+            <h3 className="dashboard-heading mt-2">Register New Employee</h3>
           </Col>
         </Row>
-        <Paper elevation={3} sx={{ maxWidth: 800, margin: "auto", p: 1 }}>
-          <Typography variant="h5" gutterBottom></Typography>
-
-          <Stepper activeStep={activeStep} alternativeLabel sx={{ mb: 4 }}>
+        <Paper elevation={3} className="add-employee-paper">
+          <Stepper
+            activeStep={activeStep}
+            alternativeLabel
+            className="custom-stepper"
+          >
             {steps.map((label, index) => (
               <Step key={label}>
                 <StepLabel>{label}</StepLabel>
@@ -151,7 +149,7 @@ function AddEmployee() {
           </Stepper>
 
           {activeStep === steps.length ? (
-            <Typography variant="h6" align="center">
+            <Typography variant="h6" align="center" className="success-message">
               All steps completed — employee registered successfully!
             </Typography>
           ) : (

@@ -96,33 +96,29 @@ const AllEmpDetails = () => {
 
   const userRole = localStorage.getItem("role");
   return (
-    <Container className="all-emp-details">
-      <Row className="mb-4 d-flex">
+    <Container className="common-container">
+      <Row className="common-header-row">
         <Col md={1}>
           <i
-            className="bi bi-arrow-left-circle"
+            className="bi bi-arrow-left-circle common-back-icon"
             onClick={() => window.history.back()}
-            style={{
-              cursor: "pointer",
-              fontSize: "32px",
-              color: "#343a40",
-            }}
           ></i>
         </Col>
         <Col md={9}>
-          <h3 className="mt-2">All Employee Details</h3>
+          <h3 className="common-title">All Employee Details</h3>
         </Col>
         <Col className="text-right">
           {(userRole === "admin" || userRole === "hr") && (
             <Link to={"/add-employee"}>
-              <Button variant="warning" className="add-employee-button">
+              <Button variant="warning" className="common-add-button">
                 Add Employee
               </Button>
             </Link>
           )}
         </Col>
       </Row>
-      <Table striped bordered hover responsive>
+
+      <Table striped bordered hover responsive className="common-table">
         <thead>
           <tr>
             <th>No.</th>
@@ -158,7 +154,6 @@ const AllEmpDetails = () => {
                     src={getProfileImage(employee._id)}
                     alt={`Profile of ${employee.personalInfo.firstname}`}
                     className="popup-profile-image"
-                    style={{ objectFit: "cover" }}
                   />
                 </td>
                 <td>{employee.personalInfo.firstname}</td>

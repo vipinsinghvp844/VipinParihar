@@ -149,6 +149,7 @@ const Login = ({ onLogin }) => {
                   placeholder="Type your password"
                   value={formik.values.password}
                   onChange={formik.handleChange}
+                  autoComplete="current-password"
                   required
                 />
               </Form.Group>

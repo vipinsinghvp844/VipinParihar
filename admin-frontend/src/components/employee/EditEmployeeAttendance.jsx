@@ -19,7 +19,7 @@ const EditEmployeeAttendance = () => {
     const fetchEmployees = async () => {
       try {
         const response = await dispatch(GetTotalUserAction());
-        const employeeUsers = response.filter(
+        const employeeUsers = response?.filter(
           (user) => user.role === "employee" || user.role === "hr"
         );
         setEmployees(employeeUsers);
