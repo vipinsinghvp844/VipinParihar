@@ -15,6 +15,8 @@ const ChatSidebar2 = ({
 }) => {
   const [lastMessages, setLastMessages] = useState([]);
   const currentUserId = localStorage.getItem("user_id");
+  const [searchItem, setSearchItem] = useState("");
+
 
   useEffect(() => {
     const fetchLastMessages = async () => {
@@ -139,98 +141,75 @@ const ChatSidebar2 = ({
         return null;
     }
   };
-
+   const handleInputChange = (e) => {
+     setSearchItem(e.target.value);
+   };
+  const SearchUsers = users.filter((user) =>
+    user.username.toLowerCase().includes(searchItem.toLowerCase())
+  );
   return (
-    <ListGroup style={{ height: "100%", overflowY: "auto" }}>
-      {users.map((user) => {
-        const msgObj = lastMessages.find((msg) => msg.userId === user._id);
-        const lastMessage = msgObj?.lastMessage;
-        const isOnline = onlineUsers?.includes(user._id);
-        
-        
-        return (
-          <ListGroup.Item
-            key={user._id}
-            onClick={() => setSelectedUser(user)}
-            active={selectedUser?._id === user._id}
-            style={{
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              padding: "10px",
-            }}
-          >
-            <div
-              style={{ display: "flex", alignItems: "center", width: "100%" }}
-            >
-              <div style={{ position: "relative" }}>
-                <img
-                  src={getProfileImage(user._id) || "/default-avatar.png"}
-                  alt="Profile"
-                  style={{
-                    width: "40px",
-                    height: "40px",
-                    objectFit: "cover",
-                    borderRadius: "50%",
-                    marginRight: "10px",
-                  }}
-                />
-                <div
-                  style={{
-                    position: "absolute",
-                    bottom: 0,
-                    right: 0,
-                    width: "10px",
-                    height: "10px",
-                    borderRadius: "50%",
-                    backgroundColor: isOnline ? "green" : "gray",
-                    border: "2px solid white",
-                  }}
-                />
-              </div>
-              <div style={{ width: "100%" }}>
-                <div style={{ fontWeight: "bold" }}>{user.username}</div>
-                <div
-                  className="message-row"
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    fontSize: "14px",
-                  }}
-                >
-                  <span
-                    className="message-text"
-                    style={{
-                      flex: "1",
-                      overflow: "hidden",
-                      whiteSpace: "nowrap",
-                      textOverflow: "ellipsis",
-                    }}
-                  >
-                    {getLastMessage(user._id)}
-                  </span>
+    <>
+      <div className="sidebar-header">
+        <i
+          className="bi bi-arrow-left-circle back-button"
+          onClick={() => window.history.back()}
+        ></i>
+        <input
+          type="text"
+          className="search-input"
+          value={searchItem}
+          onChange={handleInputChange}
+          placeholder="Type to Search User"
+        />
+      </div>
+      <ListGroup className="user-list">
+        {SearchUsers.length === 0 ? (
+          <p className="no-users-found">No user found</p>
+        ) : (
+          SearchUsers.map((user) => {
+            const msgObj = lastMessages.find((msg) => msg.userId === user._id);
+            const lastMessage = msgObj?.lastMessage;
+            const isOnline = onlineUsers?.includes(user._id);
 
-                  <span>{getTickStatus(lastMessage, currentUserId)}</span>
-                  <span
-                    className="message-time"
-                    style={{
-                      marginLeft: "10px",
-                      color: "#888",
-                      whiteSpace: "nowrap",
-                      fontSize: "13px",
-                    }}
-                  >
-                    {getMessageTimestampLabel(user._id)}
-                  </span>
+            return (
+              <ListGroup.Item
+                key={user._id}
+                onClick={() => setSelectedUser(user)}
+                active={selectedUser?._id === user._id}
+                className="user-item"
+              >
+                <div className="user-profile">
+                  <div className="profile-image-container">
+                    <img
+                      src={getProfileImage(user._id) || "/default-avatar.png"}
+                      alt="Profile"
+                      className="profile-image"
+                    />
+                    <div
+                      className={`online-status ${
+                        isOnline ? "online" : "offline"
+                      }`}
+                    />
+                  </div>
+                  <div className="user-info">
+                    <div className="username">{user.username}</div>
+                    <div className="message-row">
+                      <span className="message-text">
+                        {getLastMessage(user._id)}
+                      </span>
+                      <span>{getTickStatus(lastMessage, currentUserId)}</span>
+                      <span className="message-time">
+                        {getMessageTimestampLabel(user._id)}
+                      </span>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
-          </ListGroup.Item>
-        );
-      })}
-    </ListGroup>
+              </ListGroup.Item>
+            );
+          })
+        )}
+      </ListGroup>
+    </>
   );
 };
 

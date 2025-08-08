@@ -5,7 +5,8 @@ import { Button, Col, Container, Form, Modal, Row } from "react-bootstrap";
 import { toast } from "react-toastify";
 import { Link } from "react-router-dom";
 import { io } from "socket.io-client";
-    import moment from "moment";
+import moment from "moment";
+    import "./chat-ui.css"
 
 const socket = io("http://localhost:3000");
 
@@ -16,7 +17,6 @@ const ChatWindow2 = ({
   onlineUsers,
   lastSeenMap,
 }) => {
-  // console.log(lastSeenMap, "========");
 
   const userId = localStorage.getItem("user_id");
   const chatBoxRef = useRef(null);
@@ -178,6 +178,22 @@ const ChatWindow2 = ({
         return [...prevSelected, messageId]; // select
       }
     });
+  };
+
+  const handleCopySelectedMessages = () => {
+    const textsToCopy = messages
+      .filter((msg) => selectedMessages.includes(msg._id))
+      .map((msg) => msg.message)
+      .join("\n\n");
+
+    if (textsToCopy) {
+      navigator.clipboard
+        .writeText(textsToCopy)
+        .then(() => toast.success("Selected messages copied to clipboard"))
+        .catch(() => toast.error("Failed to copy messages"));
+    } else {
+      toast.info("No messages selected to copy.");
+    }
   };
 
   useEffect(() => {
@@ -493,45 +509,22 @@ const ChatWindow2 = ({
   const userLastSeen = userStatus.lastSeen;
 
   return (
-    <Container
-      className="d-flex flex-column border rounded"
-      style={{
-        height: "90vh",
-        maxHeight: "90vh",
-        width: "100%",
-        maxWidth: "600px",
-        margin: "auto",
-      }}
-    >
+    <Container className="chat-container">
       {/* Header */}
-      <Row className="align-items-center bg-light p-2 border-bottom position-relative">
+      <Row className="chat-header-row">
         <Col className="d-flex align-items-center">
-          <div style={{ position: "relative" }}>
+          <div className="profile-image-container">
             <img
               src={getProfileImage(selectedUser?._id) || "/default-avatar.png"}
               alt="profile"
-              className="rounded-circle me-2"
-              style={{ width: "40px", height: "40px", objectFit: "cover" }}
+              className="profile-image"
             />
-            {/* Online/Offline Dot */}
             <div
-              style={{
-                position: "absolute",
-                left: "30px",
-                bottom: "2px",
-                width: "10px",
-                height: "10px",
-                borderRadius: "50%",
-                backgroundColor: isOnline ? "green" : "gray",
-                border: "2px solid white",
-              }}
+              className={`status-indicator ${isOnline ? "online" : "offline"}`}
             />
           </div>
           <div>
             <h5 className="mb-0">{selectedUser?.username}</h5>
-            <span
-              className={`status-dot ${isOnline ? "online" : "offline"}`}
-            ></span>
             {isOnline ? (
               <span className="ms-2 text-success">Online</span>
             ) : (
@@ -547,32 +540,16 @@ const ChatWindow2 = ({
         <Col className="d-flex justify-content-end">
           {selectMode && selectedMessages.length > 0 && (
             <>
-              <span>{selectedMessages.length}</span>
+              <span className="selection-count">{selectedMessages.length}</span>
               <div
                 className="dropdown-item text-danger"
                 onClick={handleDeleteSelectedMessages}
               >
                 <i className="bi bi-trash"></i>
               </div>
-
               <div
                 className="dropdown-item"
-                onClick={() => {
-                  const textsToCopy = messages
-                    .filter((msg) => selectedMessages.includes(msg._id))
-                    .map((msg) => msg.message)
-                    .join("\n\n");
-                  if (textsToCopy) {
-                    navigator.clipboard
-                      .writeText(textsToCopy)
-                      .then(() =>
-                        toast.success("Selected messages copied to clipboard")
-                      )
-                      .catch(() => toast.error("Failed to copy messages"));
-                  } else {
-                    toast.info("No messages selected to copy.");
-                  }
-                }}
+                onClick={handleCopySelectedMessages}
               >
                 <i className="bi bi-copy"></i>
               </div>
@@ -587,20 +564,11 @@ const ChatWindow2 = ({
             </div>
           )}
           <i
-            className="bi bi-three-dots-vertical"
-            style={{ cursor: "pointer", zIndex: 100 }}
+            className="bi bi-three-dots-vertical menu-icon"
             onClick={toggleMenu}
           />
           {showOptions && (
-            <div
-              className="position-absolute bg-white shadow rounded p-2"
-              style={{
-                top: "30px",
-                right: "10px",
-                zIndex: 99,
-                minWidth: "160px",
-              }}
-            >
+            <div className="options-menu">
               <div
                 className="dropdown-item"
                 onClick={() => setSelectMode(!selectMode)}
@@ -614,10 +582,7 @@ const ChatWindow2 = ({
                 ⬇️ Download Chat
               </div>
               <div className="dropdown-item">
-                <Link
-                  to={"/profile"}
-                  style={{ color: "#333", textDecoration: "none" }}
-                >
+                <Link to="/profile" className="profile-link">
                   👤 View Profile
                 </Link>
               </div>
@@ -626,25 +591,12 @@ const ChatWindow2 = ({
         </Col>
       </Row>
       {showShareModal && (
-        <div
-          className="modal-backdrop"
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-          }}
-        >
-          <div
-            className="modal-content p-3 bg-white rounded shadow"
-            style={{ width: "300px" }}
-          >
-            <h5>Select Users to Share</h5>
-            <div
-              className="user-list"
-              style={{ maxHeight: "200px", overflowY: "auto" }}
-            >
+        <div className="share-modal-backdrop">
+          <div className="share-modal-content">
+            <h5 className="share-modal-title">Select Users to Share</h5>
+            <div className="share-user-list">
               {users
-                .filter((user) => user._id !== userId) // exclude self
+                .filter((user) => user._id !== userId)
                 .map((user) => (
                   <div key={user._id} className="form-check">
                     <input
@@ -665,8 +617,7 @@ const ChatWindow2 = ({
                   </div>
                 ))}
             </div>
-
-            <div className="d-flex justify-content-between mt-3">
+            <div className="share-modal-footer">
               <button
                 className="btn btn-secondary"
                 onClick={() => setShowShareModal(false)}
@@ -682,11 +633,7 @@ const ChatWindow2 = ({
       )}
 
       {/* Messages */}
-      <div
-        className="flex-grow-1 p-3 overflow-auto"
-        ref={chatBoxRef}
-        style={{ background: "#f9f9f9" }}
-      >
+      <div className="messages-container" ref={chatBoxRef}>
         {messages.map((msg, idx) => {
           const isMe = String(msg.sender_id?._id) === String(userId);
           const updateTime = new Date(msg.updated_at).toLocaleTimeString(
@@ -719,61 +666,33 @@ const ChatWindow2 = ({
                   "en-US"
                 )
               : null;
+          const isDeleted = msg.deleted_by_sender || msg.deleted_by_receiver;
+
           return (
             <div key={idx}>
               {messageDate !== previousMessageDate && (
-                <div className="text-center my-2 text-muted">
+                <div className="date-divider">
                   <strong>{messageDate}</strong>
                 </div>
               )}
-              <div
-                className={`d-flex ${
-                  isMe ? "justify-content-end" : "justify-content-start"
-                } mb-2`}
-                style={{ overflowWrap: "break-word", width: "100%" }}
-              >
+              <div className={`message-wrapper ${isMe ? "sent" : "received"}`}>
                 <div
-                  className={`p-2 rounded ${
-                    isMe ? "bg-success text-white" : "bg-secondary text-white"
+                  className={`message-bubble ${isMe ? "sent" : "received"} ${
+                    isDeleted ? "deleted" : ""
                   }`}
-                  style={{
-                    maxWidth: "70%",
-                    wordWrap: "break-word",
-                    whiteSpace: "pre-wrap",
-                    overflowWrap: "break-word",
-                    backgroundColor:
-                      msg.deleted_by_sender || msg.deleted_by_receiver
-                        ? "#d3d3d3"
-                        : "",
-                    color:
-                      msg.deleted_by_sender || msg.deleted_by_receiver
-                        ? "#555"
-                        : undefined,
-                  }}
                 >
-                  <div className="dot-menu position-relative">
-                    {!(msg.deleted_by_sender || msg.deleted_by_receiver) && (
-                      <div
-                        onClick={() => setDotOpenId(msg._id)}
-                        style={{ display: "flex", justifyContent: "end" }}
-                      >
-                        <i
-                          className="bi bi-three-dots-vertical"
-                          style={{ cursor: "pointer" }}
-                        ></i>
+                  <div className="dot-menu">
+                    {!isDeleted && (
+                      <div onClick={() => setDotOpenId(msg._id)}>
+                        <i className="bi bi-three-dots-vertical dot-menu-icon"></i>
                       </div>
                     )}
-                    {/* 3 Dot open edit delete*/}
                     {dotOpenId === msg._id && (
-                      <div
-                        className="position-absolute bg-dark p-2 rounded"
-                        style={{ zIndex: "1" }}
-                      >
+                      <div className="dot-menu-options">
                         {isMe && (
                           <>
                             <div
-                              className="text-light"
-                              style={{ cursor: "pointer", marginBottom: "5px" }}
+                              className="dot-menu-option"
                               onClick={() => {
                                 setNewMessage(msg.message);
                                 setEditMode(true);
@@ -781,20 +700,19 @@ const ChatWindow2 = ({
                                 setDotOpenId(null);
                               }}
                             >
-                              <i className="bi bi-pencil-square me-1"></i>Edit
+                              <i className="bi bi-pencil-square"></i> Edit
                             </div>
                             <div
-                              className="text-light"
-                              style={{ cursor: "pointer" }}
+                              className="dot-menu-option"
                               onClick={() => {
                                 handleDeleteMessage(msg._id);
                                 setDotOpenId(null);
                               }}
                             >
-                              <i className="bi bi-trash3 me-1"></i>Delete
+                              <i className="bi bi-trash3"></i> Delete
                             </div>
-                            <div className="text-light" onClick={() => {}}>
-                              <i className="bi bi-files me-1"></i>Copy
+                            <div className="dot-menu-option">
+                              <i className="bi bi-files"></i> Copy
                             </div>
                           </>
                         )}
@@ -802,29 +720,23 @@ const ChatWindow2 = ({
                     )}
                   </div>
                   <div
-                    className={`p- rounded mb- position-relative ${
-                      isMe ? "bg-success text-white" : "bg-secondary text-white"
+                    className={`message-content ${
+                      selectMode ? "selectable" : ""
                     }`}
                     onClick={() => {
                       if (selectMode) toggleSelectMessage(msg._id);
                     }}
-                    style={{ cursor: selectMode ? "pointer" : "default" }}
                   >
                     {selectMode && (
                       <input
                         type="checkbox"
+                        className="selection-checkbox"
                         checked={selectedMessages.includes(msg._id)}
-                        onChange={(e) => e.stopPropagation()} // prevent double trigger
-                        style={{
-                          position: "absolute",
-                          top: "px",
-                          left: "",
-                          zIndex: 2,
-                        }}
+                        onChange={(e) => e.stopPropagation()}
                       />
                     )}
-                    {msg.deleted_by_sender || msg.deleted_by_receiver ? (
-                      <i style={{ fontStyle: "italic", color: "#ccc" }}>
+                    {isDeleted ? (
+                      <span className="deleted-message">
                         {(() => {
                           const isSender =
                             String(msg.sender_id?._id || msg.sender_id) ===
@@ -842,63 +754,43 @@ const ChatWindow2 = ({
                             return `This message was deleted by ${msg.sender_username}`;
                           } else if (msg.deleted_by_receiver) {
                             return `This message was deleted by ${msg.receiver_username}`;
-                          } else {
-                            return "";
                           }
+                          return "";
                         })()}
-                      </i>
+                      </span>
                     ) : (
                       <>
                         {msg.media?.base64 && msg.media?.type === "image" && (
                           <img
                             src={msg.media.base64}
                             alt="sent"
-                            className="mb-2"
-                            style={{ maxWidth: "100%", borderRadius: "8px" }}
+                            className="message-media"
                           />
                         )}
-
                         {msg.media?.base64 && msg.media?.type === "video" && (
-                          <video
-                            controls
-                            className="mb-2"
-                            style={{ maxWidth: "100%", borderRadius: "8px" }}
-                          >
+                          <video controls className="message-media">
                             <source src={msg.media.base64} type="video/mp4" />
                             Your browser does not support the video tag.
                           </video>
                         )}
-
-                        <span style={{ wordBreak: "break-word" }}>
-                          {msg.message}
-                        </span>
+                        <span className="message-text">{msg.message}</span>
                       </>
                     )}
                   </div>
-                  <div
-                    className="d-flex justify-content-end align-items-center mt-1"
-                    style={{
-                      fontSize: "0.75rem",
-                      gap: "8px",
-                      flexWrap: "wrap",
-                    }}
-                  >
+                  <div className="message-meta">
                     {msg.updated_at && !msg.deleted_at && (
-                      <span style={{ fontSize: "0.7rem" }}>
+                      <span className="message-time">
                         Updated at: {updateTime}
                       </span>
                     )}
-
                     {msg.deleted_at && (
-                      <span style={{ fontSize: "0.7rem" }}>
+                      <span className="message-time">
                         Deleted at: {deleteTime}
                       </span>
                     )}
-
                     {!msg.updated_at && !msg.deleted_at && (
-                      <span style={{ fontSize: "0.7rem" }}>{messageTime}</span>
+                      <span className="message-time">{messageTime}</span>
                     )}
-
                     {isMe && msg.read_status === 1 ? (
                       <i className="bi bi-check2-all text-danger"></i>
                     ) : isMe && msg.read_status === 0 ? (
@@ -911,18 +803,13 @@ const ChatWindow2 = ({
           );
         })}
       </div>
-      <div style={{ position: "relative" }}>
+
+      {/* send input and emoji */}
+      <div className="input-container">
         <Form className="mt-3 d-flex align-items-center">
           {/* Emoji Picker */}
           {showEmojiPicker && (
-            <div
-              style={{
-                position: "absolute",
-                bottom: "50px",
-                left: "10px",
-                zIndex: 9999,
-              }}
-            >
+            <div className="emoji-picker-container">
               <EmojiPicker
                 onEmojiClick={(emojiObject) =>
                   setNewMessage((prev) => prev + emojiObject.emoji)
@@ -934,39 +821,27 @@ const ChatWindow2 = ({
           {/* Emoji Toggle Button */}
           <button
             type="button"
+            className="emoji-button"
             onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-            style={{
-              background: "transparent",
-              border: "none",
-              fontSize: "1.5rem",
-              cursor: "pointer",
-              marginRight: "1px",
-              zIndex: 10,
-            }}
           >
             😊
           </button>
 
           {/* File Upload */}
           <i
-            className="bi bi-paperclip"
+            className="bi bi-paperclip attachment-icon"
             onClick={() => document.getElementById("fileInputmedia").click()}
-            style={{
-              cursor: "pointer",
-              marginLeft: "10px",
-              fontSize: "1.5rem",
-            }}
           />
           <input
             id="fileInputmedia"
+            className="file-input"
             onChange={handleFileChange}
             type="file"
             accept="image/*,video/*"
-            style={{ display: "none" }}
           />
 
           {/* Message Input */}
-          <Form.Group controlId="newMessage" className="w-100 ms-3">
+          <Form.Group controlId="newMessage" className="message-input-group">
             <Form.Control
               type="text"
               value={newMessage}
@@ -980,7 +855,7 @@ const ChatWindow2 = ({
               <Button
                 variant="outline-secondary"
                 size="sm"
-                className="ms-2"
+                className="cancel-button"
                 onClick={() => {
                   setEditMode(false);
                   setEditMessageId(null);
@@ -993,46 +868,36 @@ const ChatWindow2 = ({
           </Form.Group>
 
           {/* Send Button */}
-          <i
-            className="bi bi-send mx-2 p-2 bg-danger rounded"
-            style={{ cursor: "pointer" }}
-            onClick={handleSendMessage}
-          ></i>
+          <i className="bi bi-send send-button" onClick={handleSendMessage} />
         </Form>
       </div>
 
       <div>
-        <Modal show={showModal} onHide={() => setShowModal(false)} centered>
-          <Modal.Header>
-            <Modal.Body>
-              {file?.type.startsWith("image") ? (
-                <img
-                  src={preview}
-                  alt="Preview"
-                  style={{
-                    width: "100%",
-                    height: "auto",
-                    borderRadius: "10px",
-                  }}
-                />
-              ) : (
-                <video
-                  src={preview}
-                  controls
-                  style={{ width: "100%", borderRadius: "10px" }}
-                />
-              )}
-              <input
-                type="text"
-                className="form-control me-2"
-                placeholder="Type a message"
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
-              />
-            </Modal.Body>
+        <Modal
+          show={showModal}
+          onHide={() => setShowModal(false)}
+          centered
+          className="preview-modal"
+        >
+          <Modal.Header closeButton>
+            <Modal.Title>Media Preview</Modal.Title>
           </Modal.Header>
-          <Modal.Footer>
+          <Modal.Body>
+            {file?.type.startsWith("image") ? (
+              <img src={preview} alt="Preview" className="preview-media" />
+            ) : (
+              <video src={preview} controls className="preview-media" />
+            )}
+            <input
+              type="text"
+              className="form-control preview-input"
+              placeholder="Type a message"
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
+            />
+          </Modal.Body>
+          <Modal.Footer className="modal-footer">
             <Button variant="secondary" onClick={() => setShowModal(false)}>
               Close
             </Button>
@@ -1040,14 +905,14 @@ const ChatWindow2 = ({
               variant="primary"
               onClick={async () => {
                 await handleSendMessage();
-                setShowModal(false); // Ensure modal closes after sending
+                setShowModal(false);
               }}
+              disabled={isSending}
             >
               {isSending ? "Sending..." : "Send"}
             </Button>
           </Modal.Footer>
         </Modal>
-        {/* <div show={showModal} onHide={() => setShowModal(false)} centered></div> */}
       </div>
     </Container>
   );

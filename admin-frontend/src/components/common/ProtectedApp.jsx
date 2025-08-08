@@ -55,13 +55,12 @@ function ProtectedApp({   onLogout, user }) {
   const userId = localStorage.getItem("user_id");
   const userRole = localStorage.getItem("role");
 
-  if (!userRole || !userId) {
-    return <Navigate to="/" replace />;
-  }
+  // if (!userRole || !userId) {
+  //   return <Navigate to="/" replace />;
+  // }
 
   return (
     <WebSocketProvider>
-      {/* <Layout userRole={userRole} onLogout={onLogout}> */}
       <Routes>
         <Route path="/admin-dashboard" element={<AdDashboard />} />
         <Route path="/hr-dashboard" element={<HrDashboard />} />
@@ -77,7 +76,6 @@ function ProtectedApp({   onLogout, user }) {
         <Route path="/all-employee" element={<AllEmpDetails />} />
         <Route path="/edit-employee/:id" element={<EditEmployee />} />
         <Route path="/add-attendance" element={<AddAttendance />} />
-        {/* <Route path="/add-employee" element={<AddNewEmployee />} /> */}
         <Route path="/add-employee" element={<AddEmployee />} />
 
         <Route path="/manage-holidays" element={<ManageHolidays />} />
@@ -98,10 +96,6 @@ function ProtectedApp({   onLogout, user }) {
         <Route path="/manage-attendance" element={<ManageAttendance />} />
         <Route path="/my-attendance" element={<AttendanceRecord />} />
         <Route path="/Calender" element={<DateCalendar />} />
-        {/* <Route
-                    path="/add-employee-details"
-                    element={<AddEmployeeDetails />}
-                  /> */}
         <Route path="/personal-detail/:id" element={<EmployeePerDetail />} />
         <Route path="/offer-letter" element={<OfferLetter />} />
         <Route path="/experience-letter" element={<ExperienceLetter />} />

@@ -10,6 +10,7 @@ const attendanceRoutes = require('./routes/attendanceRoutes');
 const leaveRoutes = require('./routes/leaveRoute');
 const attendanceCSV = require('./routes/attendanceCSVRoute');
 const chatsRoute = require('./routes/chatRoutes');
+const notificationRoute = require('./routes/notificationRoute');
 const path = require('path');
 
 
@@ -29,6 +30,7 @@ app.use('/api/attendance', attendanceRoutes);//  e.g., /api/attendance/mark-atte
 app.use('/api/leave', leaveRoutes);          //
 app.use('/api/CSV', attendanceCSV);
 app.use('/api/chats', chatsRoute);
+app.use('/api/notifications', notificationRoute);
 
 // Start Server
 const PORT = process.env.PORT || 5000;
